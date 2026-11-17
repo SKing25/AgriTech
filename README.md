@@ -123,3 +123,31 @@ pdflatex -interaction=nonstopmode INFORME_FINAL_SESION6_AgriTech.tex
 pdflatex -interaction=nonstopmode INFORME_FINAL_SESION6_AgriTech.tex
 ```
 *(Se ejecuta dos veces para resolver referencias cruzadas de figuras, tablas y tabla de contenido).*
+
+---
+
+## ☁️ Despliegue en la Nube (Vercel Serverless)
+
+El proyecto está configurado para despliegue serverless inmediato en **Vercel** (`@vercel/python`):
+
+### Arquitectura Serverless Adaptativa
+- **Persistencia en `/tmp`:** SQLite opera automáticamente sobre `/tmp/agritech.db` (única ruta con permisos de escritura en funciones serverless), inicializándose a partir de la plantilla semilla `data/agritech.db`.
+- **Simulación Reactiva sin Demonios Bloqueantes:** En lugar de mantener hilos daemon bloqueados (incompatibles con el congelamiento de estado de AWS Lambda / Vercel), la simulación física de telemetría y balance hídrico avanza de forma fluida y reactiva en cada sondeo de `/api/estado` (cada 2.5 s) o mediante solicitudes a `/api/simulador/tick`.
+
+### Opción A: Despliegue mediante Vercel CLI (Recomendado)
+1. Iniciar sesión en Vercel (si no lo has hecho):
+   ```bash
+   npx vercel login
+   ```
+2. Ejecutar el despliegue a producción:
+   ```bash
+   npx vercel --prod
+   ```
+   *(Acepta los valores predeterminados de vinculación de proyecto; el archivo `vercel.json` y `api/index.py` se encargarán de todo automáticamente).*
+
+### Opción B: Despliegue mediante GitHub
+1. Inicializa o sube el repositorio a tu cuenta de GitHub.
+2. Ingresa a [vercel.com/new](https://vercel.com/new) e importa el repositorio.
+3. Vercel detectará automáticamente la configuración de `vercel.json` y los requerimientos de Python en `requirements.txt`.
+4. Haz clic en **Deploy**. ¡Tu aplicación estará en línea con HTTPS y CDN global en menos de 2 minutos!
+

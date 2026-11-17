@@ -1,0 +1,13 @@
+INFORME_FINAL_SESION6_AgriTech.*
+capturas/
+documentacion/
+legacy/
+figures/
+agritech_cloud_app/tests/
+__pycache__/
+*.py[cod]
+*.aux
+*.log
+*.out
+*.toc
+*.pdf

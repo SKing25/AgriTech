@@ -39,10 +39,30 @@ def create_app(
     adaptadorValvulas: Optional[AdaptadorServidorValvulas] = None,
 ) -> Flask:
     """Fábrica de aplicación Flask con composición limpia de capas hexagonales."""
-    app = Flask(__name__, template_folder="templates")
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    templates_dir = os.path.join(base_dir, "templates")
+    app = Flask(__name__, template_folder=templates_dir)
     app.secret_key = os.environ.get("AGRITECH_SECRET_KEY", "agritech-precision-sergio-arboleda-2026")
 
-    rutaBd = dbPath or os.environ.get("AGRITECH_DB_PATH", "data/agritech.db")
+    es_serverless = bool(os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME"))
+    if dbPath:
+        rutaBd = dbPath
+    elif os.environ.get("AGRITECH_DB_PATH"):
+        rutaBd = os.environ["AGRITECH_DB_PATH"]
+    elif es_serverless:
+        # En entornos serverless (Vercel / Lambda) el único directorio escribible es /tmp
+        rutaBd = "/tmp/agritech.db"
+        if not os.path.exists(rutaBd):
+            template_db = os.path.join(base_dir, "data", "agritech.db")
+            if os.path.exists(template_db):
+                import shutil
+                try:
+                    shutil.copyfile(template_db, rutaBd)
+                except Exception:
+                    pass
+    else:
+        rutaBd = os.path.join(base_dir, "data", "agritech.db")
+
     repositorio = RepositorioSQLite(dbPath=rutaBd)
     repositorio.sembrarDatosIniciales()
 
@@ -88,7 +108,7 @@ def create_app(
     else:
         simulador.sincronizarDesdeRepositorio()
 
-    if iniciarSimulador:
+    if iniciarSimulador and not es_serverless:
         def _loopSimulador() -> None:
             while True:
                 time.sleep(3)
@@ -264,6 +284,11 @@ def create_app(
 
     @app.get("/")
     def index():
+        if es_serverless:
+            try:
+                simulador.ejecutarCicloTick()
+            except Exception:
+                pass
         snapshot = _construirSnapshot()
         auditoria = (
             repositorio.obtenerAuditoria(30)
@@ -355,6 +380,14 @@ def create_app(
 
     @app.get("/api/estado")
     def apiEstado():
+        if es_serverless:
+            ahora_ts = time.time()
+            if ahora_ts - getattr(app, "_ultimo_tick_serverless", 0) >= 2.0:
+                setattr(app, "_ultimo_tick_serverless", ahora_ts)
+                try:
+                    simulador.ejecutarCicloTick()
+                except Exception:
+                    pass
         return jsonify(_construirSnapshot()), 200
 
     @app.post("/api/lecturas")
