@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: agritech-precision-cloud
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn --bind 0.0.0.0:$PORT --workers 1 --threads 4 wsgi:app
+    healthCheckPath: /api/health
+    envVars:
+      - key: AGRITECH_SECRET_KEY
+        generateValue: true
+      - key: AGRITECH_START_SIMULATOR
+        value: "1"
+      - key: AGRITECH_DB_PATH
+        value: "/tmp/agritech.db"

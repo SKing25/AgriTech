@@ -1,0 +1,2290 @@
+UNIVERSIDAD SERGIO ARBOLEDA
+ESCUELA DE CIENCIAS EXACTAS E INGENIERÍA
+CIENCIAS DE LA COMPUTACIÓN E INTELIGENCIA ARTIFICIAL
+
+PROYECTO FINAL AGRITECH
+JUAN DAVID LÓPEZ YARA
+SANTIAGO JOSÉ RODRÍGUEZ GUTIÉRREZ
+CAMILO ANDRÉS DIAZ GARCÍA
+ROGER ADRIÁN BOHORQUEZ MORENO
+
+INGENIERÍA DE SOFTWARE
+JUAN DAVID RODRIGUEZ MARTÍNEZ
+BOGOTÁ, NOVIEMBRE 2026
+
+Propósito
+El propósito de este proyecto es aplicar e integrar los conocimientos adquiridos durante
+el curso de Ingeniería de Software, abordando las diferentes etapas del ciclo de vida del desarrollo de software. Esto comprende desde el levantamiento y análisis de requerimientos, la
+identificación de actores y definición de roles, hasta el modelamiento de datos, diseño de la
+arquitectura, implementación, pruebas y documentación del sistema.
+La implementación consiste en desarrollar un sistema de información orientado a la agricultura de precisión, capaz de gestionar y monitorear las condiciones ambientales de un cultivo
+mediante tres nodos IoT distribuidos estratégicamente en diferentes sectores del terreno. Cada
+nodo contará con sensores de humedad y temperatura que permitirán recopilar información
+en tiempo real sobre las condiciones del suelo y del entorno.
+A partir de los datos obtenidos, el sistema realizará el procesamiento y análisis de la telemetría para generar reportes sobre el estado actual de cada sector agrícola. Adicionalmente, implementará mecanismos de automatización para activar los sistemas de riego mediante
+electroválvulas cuando las condiciones de humedad lo requieran, considerando también la información meteorológica obtenida a través de una API externa, con el objetivo de optimizar
+el consumo de agua y evitar riegos innecesarios.
+Finalmente, el sistema permitirá consultar el estado meteorológico y generar alertas tempranas relacionadas con posibles condiciones ambientales desfavorables para el cultivo, proporcionando a los agricultores información útil para la toma de decisiones y la gestión eficiente de sus recursos.
+
+Alcance
+El proyecto se plantea como una propuesta experimental orientada al diseño e implementación de un sistema de información para la simulación de telemetría en un entorno agrícola. Inicialmente, el sistema contemplará la gestión de tres nodos sensores distribuidos en
+diferentes sectores de un cultivo, encargados de recopilar y transmitir información sobre las
+condiciones de humedad y temperatura.
+
+1
+
+La solución tendrá la capacidad de procesar y visualizar las mediciones obtenidas, gestionar los ciclos automatizados de riego y consultar información meteorológica mediante una
+API externa. Asimismo, se contempla el diseño de una arquitectura escalable que permita
+incorporar nuevos nodos, sensores y variables ambientales en función de los requerimientos
+futuros del sistema.
+Debido a su naturaleza experimental, la implementación estará enfocada en validar el funcionamiento, la integración y la interacción entre los diferentes componentes del sistema, sin
+pretender constituir inicialmente una solución de producción para entornos agrícolas reales.
+
+Usuarios del sistema
+El sistema contempla tres roles de usuario, cada uno con responsabilidades y permisos
+diferenciados. Los requerimientos, las historias de usuario y los diagramas de este documento
+se formulan a partir de estos roles.
+Rol
+
+Responsabilidad
+
+Gestor de sensores
+
+Opera el sistema en el día a día: enciende y apaga los nodos sensores,
+supervisa las mediciones y el estado del riego, consulta el clima y
+descarga informes. Es el usuario encargado al que se refieren los
+requerimientos funcionales.
+
+Técnico agrícola
+
+Aporta el criterio agronómico: configura los umbrales de humedad de
+cada sector según el cultivo, recibe las alertas tempranas y analiza el
+histórico de lecturas para ajustar la estrategia de riego.
+
+Administrador del
+
+Responsable técnico de la plataforma: administra las cuentas de usuario y
+
+sistema
+
+sus roles, y registra los nodos sensores asociándolos a los sectores
+agrícolas.
+
+Tabla 1: Roles de usuario del sistema.
+
+2
+
+Requerimientos funcionales
+Los requerimientos se redactan siguiendo la norma ISO/IEC/IEEE 29148: cada uno expresa una única capacidad del sistema mediante la forma «El sistema deberá…», es verificable de
+manera objetiva y se identifica con un código, el actor que lo origina, su prioridad (MoSCoW)
+y el método de verificación (prueba, inspección o demostración).
+ID
+
+Requerimiento
+
+Actor
+
+Prioridad
+
+RF-01
+
+El sistema deberá mostrar, para cada sector agrícola, la
+
+Gestor de
+
+Must
+
+última humedad del suelo ( %), la temperatura del
+
+sensores,
+
+suelo (°C), la fecha y hora de la lectura y el estado del
+
+técnico
+
+nodo sensor y de la electroválvula, así como el
+
+agrícola
+
+histórico de lecturas válidas de los últimos 30 días.
+RF-02
+
+El sistema deberá permitir encender y apagar cada
+
+Gestor de
+
+nodo sensor de forma individual. Un nodo apagado no
+
+sensores
+
+Must
+
+deberá generar lecturas ni intervenir en las decisiones
+de riego.
+RF-03
+
+El sistema deberá generar y descargar un informe en
+
+Gestor de
+
+formato Excel (.xlsx) con las lecturas de un rango de
+
+sensores
+
+Must
+
+fechas seleccionado, en el que cada fila contenga el
+sector, el nodo, la fecha y hora, la humedad y la
+temperatura.
+RF-04
+
+El sistema deberá abrir la electroválvula de un sector
+
+Sistema
+
+cuando la humedad sea menor que el umbral mínimo
+
+(automático)
+
+Must
+
+configurado y cerrarla cuando alcance la humedad
+objetivo o cuando se cumplan 45 minutos de riego,
+registrando para cada ciclo el inicio, el fin, la duración
+y el motivo de cierre.
+
+3
+
+ID
+
+Requerimiento
+
+Actor
+
+Prioridad
+
+RF-05
+
+El sistema deberá consultar a la API meteorológica las
+
+Gestor de
+
+Must
+
+condiciones actuales y el pronóstico de las próximas 6
+
+sensores,
+
+horas (temperatura, humedad relativa y probabilidad de
+
+sistema
+
+lluvia), mostrarlos en la interfaz y posponer el riego
+cuando la probabilidad de lluvia sea mayor al 70 % y
+la humedad del suelo no sea crítica (igual o superior a
+15 %).
+RF-06
+
+El sistema deberá generar una alerta temprana por
+
+Técnico
+
+sector cuando se cumpla alguna de las siguientes
+
+agrícola
+
+Should
+
+condiciones: (a) riesgo fitosanitario, con humedad
+relativa del aire mayor al 85 % y temperatura ambiente
+entre 18 y 28 °C durante 6 horas continuas; (b) estrés
+térmico, con temperatura del suelo igual o superior a
+35 °C durante 2 horas; (c) riesgo de helada, con
+temperatura mínima pronosticada igual o inferior a
+2 °C. Una alerta del mismo tipo y sector no deberá
+repetirse en un lapso de 12 horas.
+RF-07
+
+El sistema deberá autenticar a los usuarios mediante
+
+Todos los roles
+
+Must
+
+El sistema deberá permitir configurar, para cada sector,
+
+Técnico
+
+Must
+
+los umbrales de humedad mínimo, crítico y objetivo,
+
+agrícola
+
+correo y contraseña y habilitar únicamente las
+funciones correspondientes a su rol, según la matriz de
+la Tabla 5.
+RF-08
+
+validando que 0 < crítico < mínimo < objetivo
+≤ 100 %. Los valores por defecto serán 15 %, 30 % y
+60 %, respectivamente.
+
+4
+
+ID
+
+Requerimiento
+
+Actor
+
+Prioridad
+
+RF-09
+
+El sistema deberá permitir crear, modificar y desactivar
+
+Administrador
+
+Must
+
+cuentas de usuario con un rol asignado, y registrar
+
+del sistema
+
+nodos sensores asociándolos a un sector agrícola.
+
+Tabla 2: Requerimientos funcionales del sistema.
+
+Todos los requerimientos funcionales se verifican mediante pruebas de aceptación construidas a partir de los criterios Dado / Cuando / Entonces de las historias de usuario asociadas
+(Tabla 10). RF-03 se verifica además por inspección del archivo generado.
+
+Requerimientos no funcionales
+Los requerimientos no funcionales se clasifican según las características de calidad de la
+norma ISO/IEC 25010 y se expresan con una métrica y un criterio de aceptación numérico
+que permite verificarlos mediante pruebas objetivas.
+ID
+
+RNF-01
+
+Característica
+
+Requerimiento y criterio de
+
+Método de
+
+ISO 25010
+
+aceptación
+
+verificación
+
+Eficiencia de
+
+El sistema deberá procesar cada lectura
+
+Prueba de carga con
+
+desempeño
+
+recibida (validación, almacenamiento y
+
+1.000 lecturas
+
+(comportamien-
+
+evaluación de riego) y reflejarla en el
+
+simuladas y medición
+
+to temporal)
+
+dashboard en un tiempo igual o inferior
+
+de latencias p95.
+
+a 2 segundos en el percentil 95, con los
+tres nodos enviando una lectura cada 10
+segundos. La orden a la electroválvula
+deberá emitirse en 3 segundos o menos
+desde la recepción de la lectura que la
+origina.
+
+5
+
+ID
+
+RNF-02
+
+Característica
+
+Requerimiento y criterio de
+
+Método de
+
+ISO 25010
+
+aceptación
+
+verificación
+
+Eficiencia de
+
+El sistema deberá soportar hasta 50
+
+Prueba de carga
+
+desempeño
+
+nodos sensores enviando una lectura
+
+escalonada de 3 a 50
+
+(capacidad)
+
+cada 10 segundos sin superar los
+
+nodos simulados.
+
+tiempos de RNF-01 ni perder lecturas.
+RNF-03
+
+Fiabilidad
+
+El servicio web deberá tener una
+
+Monitor de
+
+(disponibilidad
+
+disponibilidad mensual igual o superior
+
+disponibilidad con
+
+y tolerancia a
+
+al 99 %. Si la API meteorológica no
+
+sondeo cada 5
+
+fallos)
+
+responde en 5 segundos, el sistema
+
+minutos; prueba con la
+
+deberá usar el último pronóstico válido
+
+API simulada fuera de
+
+con una antigüedad máxima de 3 horas
+
+servicio.
+
+o, si no existe, decidir el riego solo con
+la lectura local, sin perder ninguna
+lectura válida.
+RNF-04
+
+Usabilidad y
+
+La interfaz deberá adaptarse a anchos de
+
+Prueba de usabilidad
+
+compatibilidad
+
+pantalla entre 360 y 1.920 píxeles sin
+
+con usuarios y prueba
+
+desplazamiento horizontal. Las tareas
+
+en tres resoluciones de
+
+principales (consultar un sector,
+
+referencia.
+
+encender o apagar un nodo y descargar
+un informe) deberán completarse en 3
+clics o menos desde el dashboard, con
+una tasa de éxito igual o superior al
+90 % en una prueba con al menos 5
+usuarios.
+
+6
+
+ID
+
+RNF-05
+
+Característica
+
+Requerimiento y criterio de
+
+Método de
+
+ISO 25010
+
+aceptación
+
+verificación
+
+Seguridad (con-
+
+Las contraseñas deberán almacenarse
+
+Pruebas automatizadas
+
+fidencialidad,
+
+con bcrypt (factor de costo mínimo 10)
+
+de seguridad sobre
+
+integridad y
+
+y todo el tráfico deberá viajar por
+
+todos los endpoints e
+
+autenticidad)
+
+HTTPS con TLS 1.2 o superior. Una
+
+inspección de la base
+
+cuenta deberá bloquearse durante 15
+
+de datos.
+
+minutos tras 5 intentos fallidos y la
+sesión deberá expirar tras 30 minutos de
+inactividad. El 100 % de los endpoints
+deberá exigir autenticación y responder
+con código 403 ante un rol no
+autorizado.
+RNF-06
+
+Mantenibilidad
+
+Incorporar un nuevo nodo sensor o
+
+Medición con
+
+(modificabilidad
+
+sector deberá requerir solo registro y
+
+herramientas de
+
+y capacidad de
+
+configuración, sin modificar el código
+
+análisis estático y de
+
+prueba)
+
+fuente, y completarse en 10 minutos o
+
+cobertura; prueba de
+
+menos. Cada sistema externo se
+
+incorporación de un
+
+accederá mediante un único módulo
+
+nodo.
+
+adaptador, de modo que reemplazar la
+API meteorológica o el servidor de
+electroválvulas modifique un solo
+módulo. La complejidad ciclomática
+deberá ser v(G) ≤ 10 por método y la
+cobertura de pruebas unitarias igual o
+superior al 70 % en las capas de modelo
+y control.
+
+7
+
+ID
+
+RNF-07
+
+Característica
+
+Requerimiento y criterio de
+
+Método de
+
+ISO 25010
+
+aceptación
+
+verificación
+
+Fiabilidad
+
+El sistema deberá registrar en una
+
+Inspección de la
+
+(madurez) y
+
+bitácora de auditoría el 100 % de los
+
+bitácora tras ejecutar
+
+trazabilidad
+
+cambios de estado de nodos, umbrales,
+
+un conjunto de
+
+cuentas de usuario y ciclos de riego, con
+
+operaciones de prueba.
+
+el usuario responsable y la fecha y hora,
+y conservar dichos registros al menos
+90 días.
+
+Tabla 3: Requerimientos no funcionales cuantificables.
+
+Interfaces externas
+Siguiendo la norma ISO/IEC/IEEE 29148, la Tabla 4 especifica las interfaces a través de
+las cuales el sistema intercambia información con los usuarios y con los sistemas externos
+identificados en el diagrama de contexto. Todas las comunicaciones usan HTTPS (TLS 1.2 o
+superior), mensajes en formato JSON con codificación UTF-8 y marcas de tiempo en formato
+ISO 8601.
+Interfaz
+
+Tipo y protocolo
+
+Datos intercambiados y reglas
+
+IE-01 Interfaz de
+
+Aplicación web
+
+Vistas de inicio de sesión, dashboard de sectores,
+
+usuario
+
+responsiva
+
+control de nodos, clima, alertas, histórico, informes,
+
+accesible desde
+
+configuración de umbrales (técnico agrícola) y
+
+navegador
+
+administración (administrador). Cada vista se habilita
+según el rol del usuario (RF-07).
+
+8
+
+Interfaz
+
+Tipo y protocolo
+
+Datos intercambiados y reglas
+
+IE-02 Nodos
+
+API REST
+
+El nodo envía POST /api/lecturas con {id_nodo,
+
+sensores
+
+expuesta por el
+
+humedad, temperatura, timestamp}; el sistema
+
+(NodoSensorIoT)
+
+sistema; HTTPS
+
+responde 201 (aceptada), 400 (datos inválidos) o 401
+
+con token por
+
+(dispositivo no autorizado). El sistema publica la
+
+dispositivo
+
+configuración {id_nodo, encendido,
+intervalo_s} que el nodo consulta en cada ciclo.
+
+IE-03 Servidor de
+
+API REST del
+
+El sistema envía PUT /valvulas/{id} con
+
+electroválvulas
+
+servidor externo;
+
+{estado_objetivo: abierta | cerrada} y
+
+(ServidorValvu-
+
+HTTPS
+
+recibe {id, estado, timestamp}. Tiempo máximo
+
+las)
+
+de respuesta de 3 segundos con hasta 3 reintentos; si
+fallan, el ciclo se registra con error y se genera una
+alerta.
+
+IE-04 API
+
+API REST de
+
+El sistema consulta con {latitud, longitud} y
+
+meteorológica
+
+terceros (por
+
+recibe por hora la temperatura, la humedad relativa y
+
+(APIMeteo)
+
+ejemplo,
+
+la probabilidad de lluvia de las próximas 6 horas.
+
+Open-Meteo);
+
+Tiempo máximo de espera de 5 segundos; la respuesta
+
+HTTPS
+
+se almacena en caché durante 3 horas (RNF-03).
+
+Tabla 4: Especificación de las interfaces externas.
+
+Requisitos de seguridad
+Los requisitos de seguridad complementan a RF-07, RF-09 y RNF-05 y restringen el acceso a la información y a las funciones del sistema:
+SEG-01 Control de acceso por rol. Cada función solo está disponible para los roles indicados en la Tabla 5; cualquier otro acceso se rechaza con código 403 y queda
+registrado en la bitácora de auditoría.
+SEG-02 Autenticación de dispositivos. Solo los nodos registrados por el adminis9
+
+trador pueden enviar lecturas, identificándose con un token único por dispositivo que
+puede revocarse.
+SEG-03 Protección de credenciales. Las contraseñas nunca se almacenan ni se transmiten en texto plano, y las claves de acceso a servicios externos se gestionan como
+variables de entorno, fuera del código fuente.
+SEG-04 Auditoría. Las operaciones que modifican el comportamiento del sistema (encendido de nodos, cambios de umbrales, gestión de cuentas y ciclos de riego) quedan
+registradas según RNF-07.
+
+Función
+
+Gestor de
+
+Técnico
+
+sensores
+
+agrícola
+
+Sí
+
+Sí
+
+Sí
+
+Encender y apagar nodos sensores
+
+Sí
+
+No
+
+No
+
+Descargar informe en Excel
+
+Sí
+
+No
+
+No
+
+Recibir alertas tempranas
+
+Sí
+
+Sí
+
+No
+
+Consultar el histórico de lecturas
+
+No
+
+Sí
+
+No
+
+Configurar umbrales de humedad
+
+No
+
+Sí
+
+No
+
+Gestionar cuentas de usuario y registrar
+
+No
+
+No
+
+Sí
+
+No
+
+No
+
+Sí
+
+Consultar mediciones, estado del riego y
+
+Administrador
+
+clima
+
+nodos
+Consultar la bitácora de auditoría
+
+Tabla 5: Matriz de permisos por rol.
+
+Restricciones de diseño e implementación
+Las siguientes decisiones no son atributos de calidad del producto, sino restricciones impuestas por el curso y por el carácter experimental del proyecto:
+10
+
+RD-01. El prototipo se desplegará en una plataforma de computación en la nube (AWS,
+GCP, Vercel o Render) accesible por Internet.
+RD-02. La aplicación seguirá una arquitectura Modelo-Vista-Controlador (MVC) implementada con un framework web de Python (Flask, FastAPI o Django).
+RD-03. Los tres nodos sensores y el servidor de electroválvulas se simularán por software como servicios independientes, que se comunicarán con el sistema a través de las
+mismas interfaces que usarían los dispositivos reales (IE-02 e IE-03).
+RD-04. La información se almacenará en una base de datos relacional.
+
+Diagrama de contexto del sistema
+El diagrama de contexto delimita las fronteras del sistema AgriTech Precision. Toda la
+lógica interna se representa como un único proceso (caja negra) y solo se muestran las entidades externas con las que el sistema intercambia información, junto con los flujos de datos
+que cruzan la frontera. Cada flujo se etiqueta con la estructura de datos que transporta, cuyo
+detalle se especifica en la Tabla 7 y en las interfaces externas (Tabla 4).
+
+11
+
+Frontera del sistema
+
+F1 Credenciales y estado solicitado de nodos
+
+Gestor de
+sensores
+(actor humano)
+
+F2 Parámetros de informe
+
+F9 Lectura de telemetría
+
+F3 Panel de sectores (mediciones, riego, clima y alertas)
+
+F10 Configuración del nodo
+
+NodoSensorIoT
+NODO-01, 02, 03
+(sistema externo,
+simulado)
+
+F4 Archivo de informe (.xlsx)
+
+0
+F5 Credenciales y umbrales del sector
+
+Técnico
+agrícola
+(actor humano)
+
+F6 Histórico, ciclos de riego y alertas
+
+Sistema
+AgriTech
+Precision
+
+F11 Estado objetivo de válvula
+
+ServidorValvulas
+(sistema externo,
+F12 Estado reportado de válvula
+
+simulado)
+
+Monitoreo agrícola IoT
+y riego automatizado
+
+F13 Consulta meteorológica
+
+F7 Credenciales, datos de
+cuentas y registro de nodos
+
+APIMeteo
+
+Administrador
+del sistema
+(actor humano)
+
+(API meteorológica
+F14 Datos meteorológicos y pronóstico
+
+de terceros)
+
+F8 Listado de cuentas, nodos y bitácora
+
+Actor humano / API externa
+
+Sistema externo simulado
+
+Frontera
+
+Flujo de datos
+
+Figura 1: Diagrama de contexto del sistema AgriTech Precision (Grupo 2).
+
+Entidades externas
+La Tabla 6 describe las seis entidades externas. Los nodos sensores y el servidor de electroválvulas son sistemas externos según el enunciado del caso; en el prototipo se simulan por
+software como servicios independientes (RD-03), por lo que permanecen fuera de la frontera
+y se comunican con el sistema a través de interfaces definidas.
+
+12
+
+Entidad
+
+Tipo
+
+Rol respecto al sistema
+
+Gestor de sensores
+
+Actor humano
+
+Enciende y apaga los nodos, supervisa las
+mediciones y el riego, consulta el clima y descarga
+informes.
+
+Técnico agrícola
+
+Actor humano
+
+Configura los umbrales de humedad por sector,
+recibe las alertas tempranas y analiza el histórico.
+
+Administrador del
+
+Actor humano
+
+sistema
+
+Administra las cuentas de usuario y registra los
+nodos sensores.
+
+NodoSensorIoT
+
+Sistema externo
+
+Mide la humedad y la temperatura del suelo de un
+
+(NODO-01, 02 y 03)
+
+(simulado)
+
+sector y envía las lecturas; recibe su configuración
+de encendido e intervalo de muestreo.
+
+ServidorValvulas
+
+APIMeteo
+
+Sistema externo
+
+Ejecuta físicamente la apertura y el cierre de las
+
+(simulado)
+
+electroválvulas y reporta su estado.
+
+API de terceros
+
+Suministra las condiciones meteorológicas actuales
+y el pronóstico; el sistema solo la consume.
+
+Tabla 6: Entidades externas del sistema.
+
+Flujos de datos
+La Tabla 7 detalla la estructura de datos que transporta cada flujo. Los flujos se modelan
+como paquetes de información en tránsito y no como instrucciones de control: por ejemplo,
+el sistema no envía una «orden de apertura», sino el estado objetivo de una válvula, que el
+servidor externo interpreta.
+ID
+
+Origen
+
+Destino
+
+Estructura de datos
+
+RF
+
+F1
+
+Gestor de
+
+Sistema
+
+Credenciales {correo, contraseña};
+
+RF-07,
+
+estado solicitado de nodo {id_nodo,
+
+RF-02
+
+sensores
+
+encendido}.
+
+13
+
+ID
+
+Origen
+
+Destino
+
+Estructura de datos
+
+RF
+
+F2
+
+Gestor de
+
+Sistema
+
+Parámetros de informe {sector,
+
+RF-03
+
+sensores
+F3
+
+F4
+
+F5
+
+F6
+
+Sistema
+
+Sistema
+
+fecha_inicio, fecha_fin}.
+Gestor de
+
+Panel de sectores {sector, humedad,
+
+RF-01,
+
+sensores
+
+temperatura, fecha_hora, estado_nodo,
+
+RF-05,
+
+estado_válvula, clima, alertas}.
+
+RF-06
+
+Gestor de
+
+Archivo .xlsx con filas {sector, nodo,
+
+RF-03
+
+sensores
+
+fecha_hora, humedad, temperatura}.
+
+Técnico agrícola Sistema
+
+Sistema
+
+Credenciales; umbrales del sector
+
+RF-07,
+
+{sector, mínimo, crítico, objetivo}.
+
+RF-08
+
+Técnico agrícola Histórico de lecturas, ciclos de riego
+
+RF-01,
+
+{inicio, fin, duración, motivo} y alertas
+
+RF-06
+
+{sector, tipo, fecha_hora}.
+F7
+
+Administrador
+
+Sistema
+
+Credenciales; cuenta {nombre, correo,
+
+RF-07,
+
+rol, activa}; registro de nodo {id_nodo,
+
+RF-09
+
+sector}.
+F8
+
+Sistema
+
+Administrador
+
+Listado de cuentas y nodos; registros de
+
+RF-09
+
+bitácora {usuario, operación,
+fecha_hora}.
+F9
+
+F10
+
+NodoSensorIoT
+
+Sistema
+
+Sistema
+
+NodoSensorIoT
+
+Lectura de telemetría {id_nodo,
+
+RF-01,
+
+humedad, temperatura, timestamp}.
+
+RF-04
+
+Configuración del nodo {id_nodo,
+
+RF-02
+
+encendido, intervalo_s}.
+F11
+
+Sistema
+
+ServidorValvulas Estado objetivo de válvula {id_válvula,
+
+RF-04
+
+estado_objetivo}.
+F12
+
+ServidorValvulas Sistema
+
+Estado reportado de válvula
+
+RF-04
+
+{id_válvula, estado, timestamp}.
+
+14
+
+ID
+
+Origen
+
+Destino
+
+Estructura de datos
+
+RF
+
+F13
+
+Sistema
+
+APIMeteo
+
+Consulta meteorológica {latitud,
+
+RF-05
+
+longitud, horizonte_h}.
+F14
+
+APIMeteo
+
+Sistema
+
+Datos meteorológicos {temperatura,
+
+RF-05,
+
+humedad_relativa, prob_lluvia,
+
+RF-06
+
+temp_mínima} por hora.
+
+Tabla 7: Flujos de datos que cruzan la frontera del sistema.
+
+Decisiones de delimitación
+Tres roles de usuario. El sistema distingue al gestor de sensores, que opera el día a día; al
+técnico agrícola, que aporta el criterio agronómico; y al administrador, responsable técnico de
+la plataforma. Cada uno intercambia datos distintos con el sistema, por lo que se representan
+como entidades separadas.
+Dispositivos de campo como sistemas externos. El enunciado identifica a NodoSensorIoT y ServidorValvulas como entidades externas. Aunque en el prototipo se simulan, se
+implementan como servicios independientes que usan las mismas interfaces que los dispositivos reales (IE-02 e IE-03). Así, reemplazar la simulación por hardware físico no modifica
+la frontera ni la arquitectura del sistema (RNF-06).
+La API meteorológica como servicio de terceros. La comunicación es de tipo solicitudrespuesta y siempre la inicia el sistema (F13), que recibe a cambio los datos meteorológicos
+(F14). Estos datos alimentan la consulta del clima (RF-05), la decisión de posponer el riego
+(RF-04) y las alertas tempranas (RF-06).
+
+Product Backlog y Tablero Scrum
+El proyecto se desarrolla bajo el marco ágil Scrum. En la primera sesión se asignaron los
+roles del equipo, se redactaron las historias de usuario con sus criterios de aceptación y se
+construyó el Product Backlog inicial. Las historias se escriben desde la perspectiva de los tres
+
+15
+
+roles de usuario del sistema (Tabla 1), y las actividades de gestión del proyecto se registran
+en un tablero separado del Product Backlog.
+
+Roles del equipo
+Rol
+
+Integrante
+
+Responsabilidad principal
+
+Product Owner
+
+Roger Adrián Bohórquez Moreno
+
+Define y prioriza el Product Backlog y
+acepta o rechaza las historias según sus
+criterios de aceptación.
+
+Scrum Master
+
+Juan David López Yara
+
+Facilita los eventos Scrum, elimina
+impedimentos y mantiene actualizados
+los tableros.
+
+Developer
+
+Developer
+
+Santiago José Rodríguez
+
+Diseño, implementación y pruebas del
+
+Gutiérrez
+
+sistema.
+
+Camilo Andrés Díaz García
+
+Diseño, implementación y pruebas del
+sistema.
+
+Tabla 8: Asignación de roles Scrum.
+
+Tablero Scrum
+El Product Backlog y el tablero Scrum pueden consultarse en el siguiente enlace:
+https://app.notion.com/p/8b1c944c3e2e4679ad3422989e6af505?v=40d33b0f72618177b
+6a1000c4f2995d1
+
+El tablero contiene exclusivamente las 14 historias de usuario del producto (HU-01 a
+HU-14). Cada tarjeta registra la historia, sus criterios de aceptación, el rol que la origina,
+la prioridad MoSCoW, la épica, los story points, el sprint planificado y los requerimientos
+funcionales que atiende. Las tarjetas avanzan de izquierda a derecha por las columnas descritas
+en la Tabla 9.
+
+16
+
+Columna
+
+Significado
+
+Product Backlog
+
+Historias del producto aún no planificadas, priorizadas por el Product
+Owner.
+
+Sprint Backlog
+
+Historias que el equipo se comprometió a construir en el sprint en curso.
+
+En progreso
+
+Historias en construcción (máximo una por integrante).
+
+En revisión
+
+Historias terminadas que esperan revisión de otro integrante y aprobación
+del Product Owner.
+
+Terminado
+
+Historias que cumplen sus criterios de aceptación y la Definición de
+Terminado.
+
+Tabla 9: Columnas del tablero Scrum.
+
+La Figura 2 muestra el estado actual del tablero. Todas las historias permanecen en el
+Product Backlog porque su construcción está planificada para los sprints 4 y 5, dedicados al
+prototipo.
+
+17
+
+Figura 2: Estado actual del tablero Scrum del producto.
+
+Product Backlog
+La Tabla 10 resume las historias de usuario, estimadas en story points con la escala de
+Fibonacci y priorizadas con el método MoSCoW (Must: imprescindible para el prototipo,
+Should: importante, Could: deseable). Cada historia indica el rol que la origina (en la tabla,
+
+18
+
+Gestor corresponde al gestor de sensores) y los requerimientos funcionales que atiende. Las
+historias se agrupan en seis épicas: EP-01 Control de nodos, EP-02 Telemetría y visualización,
+EP-03 Riego automatizado, EP-04 Clima y alertas, EP-05 Informes y EP-06 Seguridad y
+administración. La columna Sprint indica la sesión del curso en la que se planea construir
+cada historia; S4 y S5 corresponden a la construcción del prototipo.
+
+19
+
+ID
+
+Historia de usuario
+
+Rol
+
+RF
+
+Prioridad SP Sprint
+
+Gestor
+
+RF-02
+
+Must
+
+3
+
+S4
+
+HU-02 Recibir y validar lecturas
+
+Gestor
+
+RF-01
+
+Must
+
+5
+
+S4
+
+HU-03 Visualizar mediciones por
+
+Gestor
+
+RF-01
+
+Must
+
+5
+
+S4
+
+Gestor
+
+RF-04
+
+Must
+
+8
+
+S5
+
+HU-05 Considerar el pronóstico antes Gestor
+
+RF-04,
+
+Must
+
+5
+
+S5
+
+HU-01 Encender y apagar nodos
+sensores
+
+sector
+HU-04 Activar riego automático
+
+de regar
+
+RF-05
+
+HU-06 Consultar el clima
+
+Gestor
+
+RF-05
+
+Must
+
+3
+
+S5
+
+HU-07 Recibir alertas tempranas
+
+Técnico
+
+RF-06
+
+Should
+
+5
+
+S5
+
+agrícola
+HU-08 Descargar informe en Excel
+
+Gestor
+
+RF-03
+
+Must
+
+5
+
+S5
+
+HU-09 Consultar el estado del riego
+
+Gestor
+
+RF-01,
+
+Should
+
+2
+
+S5
+
+RF-01
+
+Could
+
+3
+
+S5
+
+RF-08
+
+Must
+
+3
+
+S4
+
+RF-07,
+
+Must
+
+5
+
+S4
+
+RF-04
+HU-10 Consultar el histórico de
+lecturas
+HU-11 Configurar umbrales de
+humedad
+HU-12 Gestionar cuentas de usuario
+
+Técnico
+agrícola
+Técnico
+agrícola
+Administrador
+
+RF-09
+HU-13 Registrar nodos sensores
+
+Administrador
+
+RF-09
+
+Should
+
+3
+
+S4
+
+HU-14 Iniciar sesión según el rol
+
+Todos los roles
+
+RF-07
+
+Must
+
+3
+
+S4
+
+Total 58
+
+Tabla 10: Product Backlog y su trazabilidad con los requerimientos funcionales.
+
+La Figura 3 muestra la vista del Product Backlog en el tablero.
+
+20
+
+Figura 3: Vista Product Backlog del tablero.
+
+Estructura de una historia de usuario
+Cada tarjeta del tablero contiene la historia en el formato Como [rol], quiero [acción],
+para [beneficio], sus criterios de aceptación en la forma Dado / Cuando / Entonces y la lista
+de verificación de la Definición de Terminado. La Figura 4 muestra como ejemplo la historia
+HU-04.
+
+21
+
+Figura 4: Tarjeta de la historia HU-04 (Activar riego automático).
+
+Especificación de las historias de usuario
+A continuación se detallan las catorce historias de usuario que conforman el Product Backlog (HU-01 a HU-14), junto con sus criterios de aceptación y su trazabilidad con los requerimientos. Todas las historias comparten la misma Definición de Terminado: código revisado
+
+22
+
+e integrado en la rama main, pruebas unitarias aprobadas, aplicación desplegada en la nube
+(RD-01) y diagramas de diseño actualizados.
+HU-01 — Encender y apagar nodos sensores (RF-02 | Must | 3 SP | Sprint S4 | EP01): Como gestor de sensores, quiero controlar el funcionamiento de los tres nodos sensores
+(NODO-01, NODO-02, NODO-03) mediante opciones de encendido y apagado en la interfaz
+gráfica, para iniciar o detener la captura y transmisión de telemetría en cada sector agrícola
+según se requiera.
+CA1. Dado un nodo sensor en estado apagado, cuando el gestor de sensores selecciona
+la opción de encender en la interfaz web, entonces el sistema envía al NodoSensorIoT
+la configuración de encendido y comienza a recibir sus lecturas de humedad y temperatura.
+CA2. Dado un nodo sensor en estado encendido, cuando el gestor de sensores selecciona la opción de apagar en la interfaz web, entonces el sistema envía la configuración
+de apagado y deja de procesar lecturas de ese sector.
+CA3. Dado el panel de control de nodos, cuando el gestor de sensores cambia el estado
+de cualquiera de los tres nodos, entonces la interfaz gráfica actualiza de forma inmediata
+el indicador visual de estado (Encendido / Apagado).
+CA4. Dado que todos los nodos sensores han sido apagados, cuando el sistema recibe
+la señal de apagado, entonces el ciclo de monitoreo termina hasta que al menos un nodo
+vuelva a encenderse.
+HU-02 — Recibir y validar lecturas (RF-01 | Must | 5 SP | Sprint S4 | EP-02): Como
+gestor de sensores, quiero que el sistema reciba y valide las lecturas de humedad y temperatura del suelo enviadas por cada nodo sensor encendido, para almacenar únicamente
+mediciones válidas y descartar lecturas fuera de rango antes de actualizar el dashboard o
+evaluar el riego.
+CA1. Dado un NodoSensorIoT encendido que mide la humedad y la temperatura del
+suelo, cuando envía la lectura al sistema con valores dentro del rango válido (humedad
+
+23
+
+entre 0 % y 100 %, temperatura entre −10 °C y 60 °C), entonces el sistema valida la
+lectura y la almacena con su fecha, hora y sector agrícola asociado.
+CA2. Dada una lectura recibida desde un NodoSensorIoT, cuando presenta valores
+fuera de rango físico o datos incompletos, entonces el sistema registra la lectura inválida, la descarta y no la utiliza para decisiones de riego ni alertas.
+CA3. Dado un nodo sensor en estado apagado, cuando el sistema recibe una lectura de
+ese nodo, entonces no la procesa ni la almacena.
+CA4. Dada una lectura válida, cuando el sistema la procesa, entonces queda reflejada
+en el dashboard en 2 segundos o menos (RNF-01).
+HU-03 — Visualizar mediciones por sector (RF-01 | Must | 5 SP | Sprint S4 | EP-02):
+Como gestor de sensores, quiero visualizar en una interfaz gráfica las mediciones actuales
+de humedad y temperatura recopiladas por los nodos sensores en cada sector agrícola, para
+conocer en tiempo real las condiciones del suelo.
+CA1. Dado que existen lecturas válidas almacenadas, cuando el gestor de sensores consulta el dashboard en la interfaz web, entonces el sistema presenta la humedad ( %) y la
+temperatura (°C) actuales de cada uno de los tres sectores agrícolas junto con el estado
+de su nodo sensor.
+CA2. Dado un nuevo intervalo de muestreo con lecturas válidas, cuando el sistema
+actualiza el dashboard, entonces las mediciones en pantalla se refrescan en 2 segundos
+o menos (RNF-01).
+CA3. Dado que el gestor de sensores accede desde un computador o un dispositivo
+móvil, cuando visualiza el panel de mediciones por sector, entonces la interfaz se adapta
+a anchos de pantalla entre 360 y 1.920 píxeles sin desplazamiento horizontal (RNF-04).
+HU-04 — Activar riego automático (RF-04 | Must | 8 SP | Sprint S5 | EP-03): Como
+gestor de sensores, quiero que el sistema abra la electroválvula cuando la humedad caiga
+bajo el umbral mínimo y la cierre al alcanzar la humedad objetivo, para regar solo cuando
+el cultivo lo necesita.
+24
+
+CA1. Dado un sector cuya humedad cae bajo el umbral mínimo, cuando se evalúa la
+lectura, entonces se envía el estado objetivo abierta al ServidorValvulas y se inicia
+el ciclo de riego.
+CA2. Dado un ciclo de riego activo, cuando la humedad alcanza el objetivo, entonces
+se envía el estado objetivo cerrada y se registra la duración del ciclo.
+CA3. Dado un ciclo de riego activo, cuando pasan 45 minutos sin alcanzar el objetivo,
+entonces la válvula se cierra por seguridad y se genera una alerta.
+CA4. Dado un sector sin umbrales configurados por el técnico agrícola, cuando se evalúa, entonces se usan los umbrales por defecto (mínimo 30 %, crítico 15 % y objetivo
+60 %).
+HU-05 — Considerar el pronóstico antes de regar (RF-04, RF-05 | Must | 5 SP |
+Sprint S5 | EP-03): Como gestor de sensores, quiero que el sistema consulte el pronóstico
+del clima en la API meteorológica externa (APIMeteo) antes de activar las electroválvulas
+cuando la humedad sea baja, para posponer el riego si se espera lluvia próxima y evitar
+riegos innecesarios.
+CA1. Dado un sector agrícola cuya humedad está por debajo del umbral mínimo, cuando el sistema evalúa la necesidad de riego, entonces consulta el pronóstico de las próximas 6 horas a APIMeteo antes de enviar el estado objetivo al ServidorValvulas.
+CA2. Dado que el pronóstico de APIMeteo indica una probabilidad de lluvia mayor al
+70 % y la humedad del suelo no es crítica (igual o superior a 15 %), cuando se evalúa
+la decisión de riego, entonces el sistema pospone el riego y registra el motivo.
+CA3. Dado que la humedad está bajo el umbral mínimo y la probabilidad de lluvia es
+igual o inferior al 70 %, o la humedad es crítica (inferior a 15 %), cuando se evalúa el
+pronóstico, entonces el sistema inicia el riego.
+CA4. Dado que APIMeteo no responde en 5 segundos, cuando un sector presenta humedad inferior al umbral mínimo, entonces el sistema usa el último pronóstico válido
+
+25
+
+con una antigüedad máxima de 3 horas o, si no existe, decide el riego solo con la lectura
+local (RNF-03).
+HU-06 — Consultar el clima (RF-05 | Must | 3 SP | Sprint S5 | EP-04): Como gestor
+de sensores, quiero consultar en la interfaz gráfica las condiciones meteorológicas actuales y
+los pronósticos del clima obtenidos mediante la integración con la API externa (APIMeteo),
+para contar con información meteorológica actualizada del cultivo.
+CA1. Dado que el gestor de sensores solicita consultar el clima en la interfaz web,
+cuando el sistema consulta a APIMeteo, entonces presenta en pantalla la temperatura
+ambiental, la humedad relativa y la probabilidad de lluvia de las próximas 6 horas para
+la ubicación del cultivo.
+CA2. Dada una respuesta exitosa de APIMeteo, cuando se muestra en la interfaz gráfica,
+entonces se indica la fecha y hora de la última actualización meteorológica.
+CA3. Dado un fallo de comunicación con APIMeteo, cuando el gestor de sensores consulta el clima, entonces el sistema informa la indisponibilidad temporal del servicio
+externo y muestra el último pronóstico registrado.
+HU-07 — Recibir alertas tempranas (RF-06 | Should | 5 SP | Sprint S5 | EP-04):
+Como técnico agrícola, quiero recibir alertas tempranas cuando el sistema detecte condiciones de riesgo fitosanitario, estrés térmico o helada en un sector, para recomendar medidas
+preventivas antes de que el cultivo se vea afectado.
+CA1. Dado que la humedad relativa del aire supera el 85 % y la temperatura ambiente
+se mantiene entre 18 y 28 °C durante 6 horas continuas, cuando el sistema evalúa las
+condiciones de riesgo, entonces genera una alerta de riesgo fitosanitario.
+CA2. Dado un sector cuya temperatura del suelo es igual o superior a 35 °C durante
+2 horas, cuando el sistema evalúa las lecturas, entonces genera una alerta de estrés
+térmico.
+CA3. Dado un pronóstico de APIMeteo con temperatura mínima igual o inferior a 2 °C,
+cuando el sistema evalúa las condiciones de riesgo, entonces genera una alerta de riesgo
+de helada.
+26
+
+CA4. Dada una alerta generada, cuando el técnico agrícola o el gestor de sensores abren
+el dashboard, entonces visualizan el sector afectado, el tipo de alerta y la fecha y hora
+del evento.
+CA5. Dada una alerta activa de un tipo y sector, cuando la condición se repite en las
+siguientes 12 horas, entonces el sistema no genera una alerta duplicada.
+HU-08 — Descargar informe en Excel (RF-03 | Must | 5 SP | Sprint S5 | EP-05): Como
+gestor de sensores, quiero generar y descargar un informe en formato Excel (.xlsx) que
+contenga los datos recopilados por los sensores con sus valores, fechas y sectores agrícolas
+asociados, para analizar externamente el comportamiento del cultivo.
+CA1. Dado un rango de fechas con mediciones válidas almacenadas, cuando el gestor
+de sensores solicita la descarga del informe en la interfaz web, entonces el sistema
+genera y descarga un archivo con extensión .xlsx con las lecturas de ese rango.
+CA2. Dado el archivo .xlsx generado, cuando el gestor de sensores lo abre, entonces
+cada fila incluye el sector agrícola, el nodo sensor, la fecha y hora, la humedad ( %) y
+la temperatura (°C) de la lectura.
+CA3. Dado un rango de fechas sin lecturas registradas, cuando el gestor de sensores
+solicita el informe, entonces el sistema muestra un aviso en pantalla e impide la descarga
+de un archivo vacío.
+HU-09 — Consultar el estado del riego (RF-01, RF-04 | Should | 2 SP | Sprint S5 |
+EP-03): Como gestor de sensores, quiero consultar en la interfaz gráfica el estado actual
+del riego y de las electroválvulas de cada sector agrícola, para supervisar si un sector se
+encuentra regando, inactivo o con el riego pospuesto.
+CA1. Dado el dashboard principal del sistema, cuando el gestor de sensores visualiza
+un sector agrícola, entonces se muestra el estado actual de su electroválvula (Abierta /
+Regando, Cerrada / Inactivo o Pospuesto por lluvia).
+CA2. Dado un cambio de estado reportado por el ServidorValvulas, cuando se abre
+o cierra la electroválvula, entonces el estado del riego en la interfaz web se actualiza
+reflejando el cambio y la duración del ciclo.
+27
+
+HU-10 — Consultar el histórico de lecturas (RF-01 | Could | 3 SP | Sprint S5 | EP02): Como técnico agrícola, quiero consultar el histórico de lecturas validadas de humedad
+y temperatura de cada sector agrícola, para identificar tendencias y ajustar los umbrales de
+riego.
+CA1. Dado que el sistema ha almacenado múltiples lecturas válidas, cuando el técnico
+agrícola accede a la vista de histórico de un sector, entonces el sistema muestra el listado
+cronológico de las mediciones de los últimos 30 días con fecha, hora, humedad ( %) y
+temperatura (°C).
+CA2. Dada la vista de histórico, cuando el técnico agrícola filtra por sector agrícola,
+entonces se muestran únicamente las lecturas válidas correspondientes a dicho sector.
+HU-11 — Configurar umbrales de humedad (RF-08 | Must | 3 SP | Sprint S4 | EP03): Como técnico agrícola, quiero configurar los umbrales de humedad mínimo, crítico y
+objetivo de cada sector, para adaptar el riego automático a las necesidades del cultivo.
+CA1. Dados valores que cumplen 0 < crítico < mínimo < objetivo ≤ 100 %, cuando el
+técnico agrícola guarda la configuración de un sector, entonces el sistema la almacena
+y la aplica desde la siguiente lectura.
+CA2. Dados valores que no respetan ese orden, cuando el técnico agrícola intenta guardarlos, entonces el sistema rechaza la configuración e indica el error.
+CA3. Dado un sector recién registrado, cuando aún no tiene configuración propia, entonces el sistema le asigna los valores por defecto (15 %, 30 % y 60 %).
+CA4. Dado un cambio de umbrales, cuando se guarda, entonces queda registrado en la
+bitácora de auditoría con el usuario y la fecha y hora (RNF-07).
+HU-12 — Gestionar cuentas de usuario (RF-07, RF-09 | Must | 5 SP | Sprint S4 | EP06): Como administrador del sistema, quiero crear, modificar y desactivar cuentas de usuario
+y asignarles un rol, para que cada persona acceda solo a las funciones que le corresponden.
+CA1. Dados un correo no registrado y un rol válido, cuando el administrador crea la
+cuenta, entonces el usuario puede iniciar sesión y accede solo a las funciones de su rol.
+28
+
+CA2. Dado un correo ya registrado, cuando el administrador intenta crear otra cuenta
+con él, entonces el sistema rechaza la operación.
+CA3. Dada una cuenta activa, cuando el administrador la desactiva, entonces el usuario
+no puede volver a iniciar sesión y sus sesiones abiertas se cierran.
+CA4. Dada cualquier operación sobre una cuenta, cuando se completa, entonces queda
+registrada en la bitácora de auditoría (RNF-07).
+HU-13 — Registrar nodos sensores (RF-09 | Should | 3 SP | Sprint S4 | EP-01): Como
+administrador del sistema, quiero registrar los nodos sensores y asociar cada uno a un sector
+agrícola, para que sus lecturas se atribuyan al sector correcto.
+CA1. Dado un identificador de nodo no registrado y un sector existente, cuando el
+administrador registra el nodo, entonces el sistema genera su token de dispositivo y el
+nodo aparece apagado en el panel de control.
+CA2. Dado un identificador de nodo ya registrado, cuando el administrador intenta
+registrarlo de nuevo, entonces el sistema rechaza la operación.
+CA3. Dada una lectura enviada por un nodo no registrado, cuando llega al sistema,
+entonces se rechaza con código 401 y se descarta (SEG-02).
+CA4. Dado un nodo nuevo, cuando el administrador lo registra, entonces queda operativo sin modificar el código fuente y en 10 minutos o menos (RNF-06).
+HU-14 — Iniciar sesión según el rol (RF-07 | Must | 3 SP | Sprint S4 | EP-06): Como
+usuario del sistema (gestor de sensores, técnico agrícola o administrador), quiero iniciar
+sesión con mi correo y contraseña, para acceder únicamente a las funciones de mi rol.
+CA1. Dadas credenciales válidas, cuando el usuario inicia sesión, entonces accede a las
+vistas habilitadas para su rol según la Tabla 5.
+CA2. Dados 5 intentos fallidos consecutivos, cuando el usuario intenta de nuevo, entonces la cuenta se bloquea durante 15 minutos (RNF-05).
+
+29
+
+CA3. Dado un usuario autenticado, cuando intenta acceder a una función de otro rol,
+entonces el sistema responde con código 403.
+CA4. Dada una sesión sin actividad durante 30 minutos, cuando el usuario intenta continuar, entonces debe iniciar sesión de nuevo.
+
+Actividades de gestión del proyecto
+Las actividades de organización del equipo, documentación y modelado no aportan funcionalidad al producto, por lo que no forman parte del Product Backlog. Se registran en un
+tablero independiente de actividades de gestión, que puede consultarse en el siguiente enlace:
+https://app.notion.com/p/5f0a157f95a64d44afc9f12037534885?v=41633b0f72618124a
+1e2000c4a774cc1
+
+30
+
+ID
+
+Actividad
+
+Responsable
+
+Estado
+
+AG-01
+
+Asignar roles Scrum
+
+Equipo
+
+Terminado
+
+AG-02
+
+Definir las épicas del Product Backlog
+
+Roger Bohórquez
+
+Terminado
+
+AG-03
+
+Redactar las historias de usuario con
+
+Equipo
+
+Terminado
+
+Equipo
+
+Terminado
+
+criterios de aceptación
+AG-04
+
+Estimar (Planning Poker) y priorizar
+(MoSCoW)
+
+AG-05
+
+Especificar los requerimientos (SRS)
+
+Roger Bohórquez
+
+Terminado
+
+AG-06
+
+Crear el tablero Scrum y cargar las historias
+
+Juan David López
+
+Terminado
+
+AG-07
+
+Propósito y alcance del documento
+
+Roger Bohórquez
+
+Terminado
+
+AG-08
+
+Diagrama de contexto
+
+Santiago Rodríguez
+
+Terminado
+
+AG-09
+
+Diagrama de casos de uso y especificación
+
+Camilo Díaz
+
+Terminado
+
+textual
+AG-10
+
+Diagrama de actividades con carriles
+
+Santiago Rodríguez
+
+Terminado
+
+AG-11
+
+Corregir la entrega parcial según la
+
+Equipo
+
+Terminado
+
+retroalimentación del docente
+
+Tabla 11: Actividades de gestión del proyecto (fuera del Product Backlog).
+
+Diagrama de casos de uso
+El diagrama de casos de uso de la Figura 5 representa los servicios que el sistema AgriTech Precision ofrece a sus actores. Cada caso de uso corresponde a un objetivo completo y
+observable para un actor; los pasos internos del sistema, como validar una lectura o consultar
+el pronóstico, forman parte del flujo de los casos de uso y se describen en su especificación
+textual, no como casos de uso independientes.
+Los actores humanos son el gestor de sensores, el técnico agrícola y el administrador
+del sistema, que especializan al actor abstracto Usuario para el caso de uso común Iniciar
+31
+
+sesión. Los actores no humanos son los tres sistemas externos del contexto: NodoSensorIoT,
+que inicia el caso de uso Activar riego automático al enviar una lectura; ServidorValvulas, que
+ejecuta la apertura y el cierre del riego; y APIMeteo, que suministra los datos meteorológicos.
+
+Figura 5: Diagrama de casos de uso del sistema AgriTech Precision.
+
+32
+
+ID
+
+Caso de uso
+
+Actores
+
+Historias
+
+CU-01
+
+Iniciar sesión
+
+Usuario (los tres roles)
+
+HU-14
+
+CU-02
+
+Encender y apagar nodos sensores
+
+Gestor de sensores,
+
+HU-01
+
+NodoSensorIoT
+CU-03
+
+Consultar mediciones y estado del
+
+Gestor de sensores
+
+riego
+CU-04
+
+Activar riego automático
+
+HU-02,
+HU-03, HU-09
+
+NodoSensorIoT,
+
+HU-04, HU-05
+
+ServidorValvulas,
+APIMeteo
+CU-05
+
+Consultar condiciones meteorológicas
+
+Gestor de sensores,
+
+HU-06
+
+APIMeteo
+CU-06
+
+Descargar informe en Excel
+
+Gestor de sensores
+
+HU-08
+
+CU-07
+
+Recibir alertas tempranas
+
+Técnico agrícola, gestor de
+
+HU-07
+
+sensores, APIMeteo
+CU-08
+
+Configurar umbrales de humedad
+
+Técnico agrícola
+
+HU-11
+
+CU-09
+
+Consultar el histórico de lecturas
+
+Técnico agrícola
+
+HU-10
+
+CU-10
+
+Gestionar cuentas de usuario
+
+Administrador del sistema
+
+HU-12
+
+CU-11
+
+Registrar nodos sensores
+
+Administrador del sistema
+
+HU-13
+
+Tabla 12: Casos de uso, actores e historias de usuario relacionadas.
+
+Especificación textual del caso de uso principal
+Se selecciona como caso de uso principal CU-04 Activar riego automático, porque concentra el valor central del sistema, que consiste en optimizar el consumo de agua según la
+humedad del suelo y el pronóstico del clima, e involucra a los tres sistemas externos. Cada
+ejecución del caso de uso atiende una lectura que indica falta de humedad en un sector y termina al registrar el ciclo de riego resultante; las lecturas siguientes inician nuevas ejecuciones.
+
+33
+
+Campo
+
+Descripción
+
+Identificador
+
+CU-04
+
+Nombre
+
+Activar riego automático
+
+Actor principal
+
+NodoSensorIoT, que inicia el caso de uso al enviar una lectura de
+telemetría.
+
+Actores secundarios
+
+ServidorValvulas, que ejecuta la apertura y el cierre de la electroválvula;
+APIMeteo, que suministra el pronóstico del clima.
+
+Interesados
+
+Gestor de sensores, que supervisa el resultado (CU-03); técnico agrícola,
+que define los umbrales (CU-08).
+
+Descripción
+
+El sistema valida la lectura recibida, compara la humedad del sector con
+el umbral mínimo y, si está por debajo, consulta el pronóstico. Cuando el
+riego procede, abre la electroválvula, recibe las lecturas siguientes del
+sector y la cierra al alcanzar la humedad objetivo, registrando el ciclo de
+riego.
+
+Disparador
+
+Llegada de una lectura de telemetría (F9) de un nodo sensor encendido.
+
+Precondiciones
+
+1. El nodo sensor está registrado (CU-11), asociado a un sector y
+encendido (CU-02).
+2. El sector tiene umbrales de humedad configurados (CU-08) o usa los
+valores por defecto: mínimo 30 %, crítico 15 % y objetivo 60 %.
+3. La electroválvula del sector está cerrada y no hay un ciclo de riego
+activo.
+4. El ServidorValvulas está disponible.
+
+Postcondiciones de
+
+1. Las lecturas válidas quedan almacenadas con su sector, valores y fecha.
+
+éxito
+
+2. El ciclo de riego queda registrado con su inicio, fin, duración y motivo
+de cierre.
+3. La electroválvula queda cerrada y el estado del sector queda
+actualizado en el dashboard.
+
+34
+
+Campo
+
+Descripción
+
+Garantías mínimas
+
+Toda lectura recibida queda registrada como válida o inválida, y la
+electroválvula nunca permanece abierta más de 45 minutos.
+
+Trazabilidad
+
+RF-01, RF-04 y RF-05; historias HU-02, HU-04 y HU-05; diagrama de
+actividades de la Figura 6.
+
+Tabla 13: Ficha del caso de uso CU-04 Activar riego automático.
+
+Flujo básico
+El flujo básico describe el escenario de éxito en el que la humedad está por debajo del
+umbral mínimo, no se espera lluvia y el riego termina al alcanzar la humedad objetivo.
+Paso
+
+Responsable
+
+Acción
+
+1
+
+NodoSensorIoT
+
+Envía una lectura de telemetría {id_nodo, humedad,
+temperatura, timestamp}.
+
+2
+
+Sistema
+
+Valida el formato y el rango de la lectura (humedad entre 0 y
+100 %, temperatura entre −10 y 60 °C).
+
+3
+
+Sistema
+
+Almacena la lectura válida asociada al sector del nodo.
+
+4
+
+Sistema
+
+Compara la humedad del sector con el umbral mínimo y
+determina que está por debajo.
+
+5
+
+Sistema
+
+Solicita a APIMeteo el pronóstico de las próximas 6 horas para
+la ubicación del cultivo.
+
+6
+
+APIMeteo
+
+Devuelve los datos meteorológicos y el pronóstico.
+
+7
+
+Sistema
+
+Determina que la probabilidad de lluvia es igual o inferior al
+70 %, por lo que el riego procede.
+
+8
+
+Sistema
+
+Envía al ServidorValvulas el estado objetivo abierta y registra
+el inicio del ciclo de riego.
+
+35
+
+Paso
+
+Responsable
+
+Acción
+
+9
+
+ServidorValvulas
+
+Abre la electroválvula y reporta el estado abierta.
+
+10
+
+NodoSensorIoT
+
+Envía las lecturas siguientes del sector durante el riego; el
+sistema las valida y almacena como en los pasos 2 y 3.
+
+11
+
+Sistema
+
+Detecta que la humedad del sector alcanzó la humedad objetivo.
+
+12
+
+Sistema
+
+Envía al ServidorValvulas el estado objetivo cerrada.
+
+13
+
+ServidorValvulas
+
+Cierra la electroválvula y reporta el estado cerrada.
+
+14
+
+Sistema
+
+Registra el fin del ciclo de riego con su duración y el motivo de
+cierre (humedad objetivo alcanzada), actualiza el estado del
+sector y termina el caso de uso.
+
+Tabla 14: Flujo básico del caso de uso CU-04.
+
+Flujos alternativos
+Los flujos alternativos A1 y A2 corresponden a las decisiones principales del diagrama
+de actividades: la validación de la lectura y la consulta del pronóstico.
+Paso
+
+Responsable
+
+Acción
+
+A1.1
+
+Sistema
+
+En el paso 2 detecta que la lectura es inválida, porque un valor
+está ausente o fuera del rango esperado.
+
+A1.2
+
+Sistema
+
+Registra la lectura como inválida y la descarta, sin almacenarla
+como medición.
+
+A1.3
+
+Sistema
+
+No evalúa el riego y termina el caso de uso.
+
+Tabla 15: Flujo alternativo A1: lectura inválida.
+
+Postcondición de A1. La lectura inválida queda registrada y descartada, y el estado del riego
+no cambia.
+
+36
+
+Paso
+
+Responsable
+
+Acción
+
+A2.1
+
+Sistema
+
+En el paso 7 determina que la probabilidad de lluvia es mayor al
+70 % y que la humedad del sector no es crítica (igual o superior
+a 15 %).
+
+A2.2
+
+Sistema
+
+Pospone el riego y registra el aplazamiento con su motivo. La
+electroválvula permanece cerrada.
+
+A2.3
+
+Sistema
+
+Actualiza el estado del sector a pospuesto por lluvia y termina
+el caso de uso.
+
+Tabla 16: Flujo alternativo A2: lluvia prevista.
+
+Postcondición de A2. El aplazamiento del riego queda registrado, la electroválvula permanece cerrada y el dashboard refleja el estado del sector.
+La Tabla 17 resume los demás flujos alternativos y de excepción.
+
+37
+
+Flujo
+
+Condición
+
+Comportamiento
+
+A3
+
+Paso 4: la humedad es
+
+El sistema actualiza el estado del sector sin iniciar riego y
+
+igual o superior al
+
+termina el caso de uso.
+
+umbral mínimo.
+A4
+
+Pasos 10–11: se
+
+El sistema envía el estado objetivo cerrada, registra el ciclo
+
+cumplen 45 minutos de
+
+con el motivo tiempo máximo cumplido, genera una alerta de
+
+riego sin alcanzar la
+
+posible falla y termina el caso de uso.
+
+humedad objetivo.
+A5
+
+E1
+
+Paso 5: APIMeteo no
+
+El sistema usa el último pronóstico válido con antigüedad
+
+responde en 5
+
+máxima de 3 horas o, si no existe, continúa en el paso 8 con
+
+segundos.
+
+base en la lectura local (RNF-03).
+
+Pasos 8 o 12: el
+
+El sistema registra el ciclo con estado de error, genera una
+
+ServidorValvulas no
+
+alerta para el gestor de sensores y termina el caso de uso.
+
+responde tras 3
+reintentos.
+
+Tabla 17: Otros flujos alternativos y de excepción del caso de uso CU-04.
+
+Diagrama de actividades
+El diagrama de actividades de la Figura 6 describe el proceso de monitoreo y riego automático del sistema AgriTech Precision. Está organizado en cinco carriles: el gestor de sensores,
+el sistema, los nodos sensores (NodoSensorIoT), el servidor de electroválvulas (ServidorValvulas) y la API meteorológica (APIMeteo).
+Inicio y región interrumpible. El proceso inicia cuando el gestor enciende los nodos
+sensores: el sistema envía la configuración de encendido y el nodo activa el muestreo. El
+ciclo de monitoreo se modela dentro de una región interrumpible. Cuando el gestor apaga
+los nodos, la acción de aceptación de evento Solicitud de apagado interrumpe la región, el
+sistema envía la configuración de apagado, el nodo detiene el muestreo y la actividad termina
+en el nodo final. De esta forma, el ciclo tiene una condición de parada explícita.
+38
+
+Lectura y validación. En cada intervalo de muestreo, modelado con el evento de tiempo
+after(intervalo), donde el intervalo es el período de muestreo configurado para el nodo, el
+nodo mide la humedad y la temperatura del suelo y envía la lectura. El sistema la valida: las
+lecturas inválidas se registran y se descartan, y las válidas se almacenan. A partir de ese punto
+el flujo se divide en dos ramas paralelas mediante una bifurcación (fork).
+Rama de alertas. El sistema evalúa las condiciones de riesgo (fitosanitario, estrés térmico
+y helada, según RF-06) y genera una alerta temprana si detecta alguna.
+Rama de riego. El sistema compara la humedad con el umbral mínimo. Si está por debajo,
+consulta el pronóstico a la API meteorológica; cuando la probabilidad de lluvia es mayor al
+70 % y la humedad no es crítica, el riego se pospone. En caso contrario, el sistema envía el
+estado objetivo abierta y el servidor abre la electroválvula. El seguimiento del riego se modela
+en una segunda región interrumpible: en cada intervalo de muestreo el nodo envía una nueva
+lectura y el sistema la valida y almacena, hasta que la humedad alcanza el objetivo. Si antes
+se cumple el evento de tiempo after(45 min), este interrumpe la región y el sistema registra
+el cierre por tiempo máximo y genera una alerta. En ambos casos el sistema envía el estado
+objetivo cerrada, el servidor cierra la electroválvula y se registra el fin del ciclo de riego.
+Unión y nuevo ciclo. Cuando ambas ramas terminan, la unión (join) sincroniza el flujo, el
+sistema actualiza el estado del sector y el dashboard, y el proceso espera el siguiente intervalo
+de muestreo hasta que se reciba la solicitud de apagado.
+
+39
+
+Figura 6: Diagrama de actividades del monitoreo y riego automático.
+
+40
+
+

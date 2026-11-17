@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AgriTech Precision — Monitor IoT y Riego Automatizado</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <style type="text/tailwindcss">
+    @import "tailwindcss";
+
+    @theme {
+      --color-background: oklch(98.5% 0.004 247);
+      --color-foreground: oklch(16% 0.025 255);
+      --color-card: oklch(100% 0 0);
+      --color-card-foreground: oklch(16% 0.025 255);
+      --color-panel-alt: oklch(95.5% 0.008 247);
+      --color-primary: oklch(52% 0.17 152);
+      --color-primary-foreground: oklch(98% 0.01 152);
+      --color-secondary: oklch(92% 0.01 250);
+      --color-secondary-foreground: oklch(20% 0.02 255);
+      --color-muted: oklch(94% 0.008 250);
+      --color-muted-foreground: oklch(45% 0.02 255);
+      --color-accent: oklch(92% 0.03 220);
+      --color-accent-foreground: oklch(25% 0.04 220);
+      --color-destructive: oklch(55% 0.22 25);
+      --color-destructive-foreground: oklch(98% 0.01 25);
+      --color-border: oklch(87% 0.012 250);
+      --color-ring: oklch(58% 0.16 155);
+
+      --radius-sm: 0.375rem;
+      --radius-md: 0.5rem;
+      --radius-lg: 0.75rem;
+      --radius-xl: 1rem;
+
+      --animate-fade-in: fade-in 0.25s ease-out;
+      --animate-slide-in: slide-in 0.3s ease-out;
+
+      @keyframes fade-in {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+      @keyframes slide-in {
+        from { transform: translateY(-0.4rem); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+      }
+    }
+
+    @custom-variant dark (&:where(.dark, .dark *));
+
+    .dark {
+      --color-background: oklch(15% 0.025 258);
+      --color-foreground: oklch(97% 0.008 250);
+      --color-card: oklch(20.5% 0.025 256);
+      --color-card-foreground: oklch(97% 0.008 250);
+      --color-panel-alt: oklch(12.5% 0.022 258);
+      --color-primary: oklch(62% 0.17 152);
+      --color-primary-foreground: oklch(99% 0.005 152);
+      --color-secondary: oklch(27% 0.022 256);
+      --color-secondary-foreground: oklch(96% 0.008 250);
+      --color-muted: oklch(26% 0.02 256);
+      --color-muted-foreground: oklch(70% 0.02 250);
+      --color-accent: oklch(28% 0.04 225);
+      --color-accent-foreground: oklch(95% 0.02 225);
+      --color-destructive: oklch(52% 0.2 25);
+      --color-destructive-foreground: oklch(98% 0.01 25);
+      --color-border: oklch(32% 0.022 256);
+      --color-ring: oklch(65% 0.16 155);
+    }
+  </style>
+  <style>
+    :root {
+      --bg-fallback: #f8fafc;
+      --fg-fallback: #0f172a;
+      --card-fallback: #ffffff;
+      --alt-fallback: #f1f5f9;
+      --border-fallback: #cbd5e1;
+      --muted-fallback: #475569;
+    }
+    html.dark {
+      --bg-fallback: #0f172a;
+      --fg-fallback: #f8fafc;
+      --card-fallback: #1e293b;
+      --alt-fallback: #0b1322;
+      --border-fallback: #334155;
+      --muted-fallback: #94a3b8;
+    }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background: var(--color-background, var(--bg-fallback));
+      color: var(--color-foreground, var(--fg-fallback));
+      line-height: 1.45;
+    }
+    .ag-card {
+      background: var(--color-card, var(--card-fallback));
+      border: 1px solid var(--color-border, var(--border-fallback));
+      border-radius: var(--radius-xl, 12px);
+      padding: 1rem 1.15rem;
+    }
+    .ag-subpanel {
+      background: var(--color-panel-alt, var(--alt-fallback));
+      border: 1px solid var(--color-border, var(--border-fallback));
+      border-radius: var(--radius-lg, 8px);
+    }
+    .ag-muted { color: var(--color-muted-foreground, var(--muted-fallback)); }
+    .ag-header {
+      background: linear-gradient(90deg, #064e3b, #0f172a);
+      border-bottom: 1px solid var(--color-border, var(--border-fallback));
+      color: #f8fafc;
+    }
+    .ag-grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 1rem; }
+    .ag-grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 1rem; }
+    .ag-metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; margin: 0.75rem 0; }
+    .badge {
+      display: inline-block;
+      padding: 0.2rem 0.55rem;
+      border-radius: 6px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    .badge-OPTIMO { background: rgba(34,197,94,0.18); color: #22c55e; border: 1px solid #22c55e; }
+    .badge-REGANDO { background: rgba(56,189,248,0.18); color: #0284c7; border: 1px solid #38bdf8; }
+    html.dark .badge-REGANDO { color: #7dd3fc; }
+    .badge-RIEGO_POSPUESTO { background: rgba(245,158,11,0.18); color: #d97706; border: 1px solid #f59e0b; }
+    html.dark .badge-RIEGO_POSPUESTO { color: #fbbf24; }
+    .badge-ALERTA_FITOSANITARIA, .badge-ERROR_VALVULA, .badge-CRITICA { background: rgba(239,68,68,0.2); color: #ef4444; border: 1px solid #ef4444; }
+    html.dark .badge-ALERTA_FITOSANITARIA, html.dark .badge-ERROR_VALVULA, html.dark .badge-CRITICA { color: #fca5a5; }
+    .badge-REQUIERE_RIEGO, .badge-ADVERTENCIA { background: rgba(245,158,11,0.2); color: #d97706; border: 1px solid #f59e0b; }
+    html.dark .badge-REQUIERE_RIEGO, html.dark .badge-ADVERTENCIA { color: #fcd34d; }
+    .btn {
+      cursor: pointer; border: none; border-radius: 8px;
+      padding: 0.45rem 0.85rem; font-size: 0.82rem; font-weight: 600;
+      color: #fff; background: #16a34a; text-decoration: none; display: inline-flex; align-items: center; gap: 0.35rem;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+    .btn:hover { opacity: 0.92; }
+    .btn-secondary { background: #334155; }
+    .btn-blue { background: #0284c7; }
+    .btn-amber { background: #d97706; }
+    .btn-red { background: #dc2626; }
+    .btn-sm { padding: 0.32rem 0.65rem; font-size: 0.75rem; }
+    .sparkline {
+      width: 100%; height: 112px;
+      background: var(--color-panel-alt, var(--alt-fallback));
+      border-radius: 8px; padding: 4px;
+      border: 1px solid var(--color-border, var(--border-fallback));
+      display: block;
+    }
+    .live-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #22c55e; margin-right: 5px; animation: pulseLive 1.4s infinite; }
+    @keyframes pulseLive { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.45; transform: scale(0.8); } }
+    input, select {
+      background: var(--color-panel-alt, var(--alt-fallback));
+      color: var(--color-foreground, var(--fg-fallback));
+      border: 1px solid var(--color-border, var(--border-fallback));
+      border-radius: 6px; padding: 0.35rem 0.5rem; font-size: 0.82rem;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+    th, td { text-align: left; padding: 0.45rem 0.5rem; border-bottom: 1px solid var(--color-border, var(--border-fallback)); }
+    th { color: var(--color-muted-foreground, var(--muted-fallback)); font-weight: 600; }
+    .toast {
+      position: fixed; bottom: 1rem; right: 1rem; z-index: 50;
+      background: #0f172a; border: 1px solid #22c55e; color: #fff;
+      padding: 0.75rem 1rem; border-radius: 8px; display: none; max-width: 380px;
+    }
+  </style>
+</head>
+<body class="min-h-screen antialiased">
+<header class="ag-header px-6 py-4 flex flex-wrap justify-between items-center gap-4">
+  <div class="flex flex-col gap-1">
+    <h1 class="m-0 text-xl font-bold tracking-tight">AgriTech Precision — Grupo 2 (PCIA5008)</h1>
+    <small class="text-emerald-200 text-xs block">Monitoreo Agrícola IoT, Riego Automatizado y Alertas Fitosanitarias · Tailwind Design System v4</small>
+  </div>
+  <nav class="flex flex-wrap items-center gap-2">
+    <a href="/" class="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/25 border border-emerald-400/60 text-emerald-100">Tablero General</a>
+    {% for s in snapshot.sectores %}
+      <a href="/sectores/{{ s.idSector }}" class="px-3 py-1 rounded-full text-xs font-semibold bg-white/10 hover:bg-white/20 border border-white/15 text-slate-100 transition">{{ s.idSector }} Detalle</a>
+    {% endfor %}
+    <button type="button" onclick="alternarTema()" id="btnTema" class="px-3 py-1 rounded-full text-xs font-semibold bg-white/10 hover:bg-white/20 border border-white/20 text-slate-100 cursor-pointer">Modo Claro</button>
+    <span class="px-3 py-1 rounded-full text-xs font-semibold bg-white/10 border border-white/15"><span class="live-dot"></span>EN VIVO (2.5s)</span>
+    <span class="px-3 py-1 rounded-full text-xs font-semibold bg-white/10 border border-white/15" id="relojBadge">Reloj Simulado: {{ snapshot.relojSimulado }}</span>
+    {% if snapshot.usuario %}
+      <span class="px-3 py-1 rounded-full text-xs font-semibold bg-sky-500/20 border border-sky-400/40">{{ snapshot.usuario.nombre }} ({{ snapshot.usuario.rol }})</span>
+      {% if snapshot.usuario.rol in ['GESTOR_SENSORES', 'TECNICO_AGRICOLA', 'ADMINISTRADOR'] %}
+        <a class="btn btn-blue btn-sm" href="/api/reportes/excel">Exportar Excel (.xlsx)</a>
+      {% endif %}
+      <form method="POST" action="/logout" class="m-0">
+        <button class="btn btn-secondary btn-sm" type="submit">Cerrar Sesión</button>
+      </form>
+    {% else %}
+      <span class="px-3 py-1 rounded-full text-xs font-semibold bg-white/10 border border-white/15">Modo Lectura Pública (Inicie sesión para operar)</span>
+    {% endif %}
+  </nav>
+</header>
+
+<main class="max-w-[1400px] mx-auto p-5 grid gap-5 animate-[var(--animate-fade-in)]">
+  {% if not snapshot.usuario %}
+  <section class="ag-card shadow-sm">
+    <h2 class="m-0 mb-3 text-base font-semibold">Autenticación RBAC (SEG-01 / SEG-03 bcrypt)</h2>
+    {% if error_login %}<p class="text-red-400 text-sm mb-2">{{ error_login }}</p>{% endif %}
+    <form method="POST" action="/login" class="flex flex-wrap gap-2 items-center">
+      <input type="email" name="email" placeholder="Correo electrónico" required />
+      <input type="password" name="password" placeholder="Contraseña" required />
+      <button class="btn" type="submit">Ingresar</button>
+    </form>
+    <div class="text-xs ag-muted mt-2">
+      Cuentas semilla RBAC:
+      <code>gestor@agritech.co</code> / <code>AgriGestor2026!</code> |
+      <code>tecnico@agritech.co</code> / <code>AgriTecnico2026!</code> |
+      <code>admin@agritech.co</code> / <code>AgriAdmin2026!</code>
+    </div>
+  </section>
+  {% endif %}
+
+  {% if snapshot.usuario %}
+  <section class="ag-card shadow-sm">
+    <div class="flex flex-wrap justify-between items-center gap-2 mb-3">
+      <h2 class="m-0 text-base font-semibold">Banco de Simulación IoT en Vivo (MotorSimuladorFisico)</h2>
+      <button class="btn btn-sm" onclick="ejecutarTick()">Avanzar Ciclo (+5 min Telemetría)</button>
+    </div>
+    <div class="flex flex-wrap gap-2 items-center">
+      <label for="simSector" class="text-xs ag-muted font-medium">Sector objetivo:</label>
+      <select id="simSector">
+        {% for s in snapshot.sectores %}
+          <option value="{{ s.idSector }}">{{ s.idSector }} — {{ s.nombre }}</option>
+        {% endfor %}
+      </select>
+      <button class="btn btn-amber btn-sm" onclick="lanzarEscenario('sequia_emergencia')">Sequía Extrema (&lt;15%)</button>
+      <button class="btn btn-blue btn-sm" onclick="lanzarEscenario('lluvia_posponer')">Lluvia &gt;70% (Posponer)</button>
+      <button class="btn btn-red btn-sm" onclick="lanzarEscenario('helada')">Helada (&le;2°C)</button>
+      <button class="btn btn-red btn-sm" onclick="lanzarEscenario('riesgo_fungico')">Riesgo Fúngico (6h)</button>
+      <button class="btn btn-amber btn-sm" onclick="lanzarEscenario('estres_termico')">Estrés Térmico (&ge;35°C)</button>
+      <button class="btn btn-red btn-sm" onclick="lanzarEscenario('fallo_valvula')">Fallo Válvula (3 Reintentos)</button>
+      <button class="btn btn-secondary btn-sm" onclick="lanzarEscenario('avanzar_timeout_45min')">Forzar Timeout 45 min</button>
+      <button class="btn btn-sm" onclick="lanzarEscenario('normalizar')">Normalizar Sector</button>
+    </div>
+  </section>
+  {% endif %}
+
+  <section class="ag-grid-3" id="sectoresGrid">
+    {% for s in snapshot.sectores %}
+    <article class="ag-card shadow-sm flex flex-col justify-between gap-2" id="card_{{ s.idSector }}">
+      <div>
+        <div class="flex justify-between items-center gap-2 mb-2">
+          <a href="/sectores/{{ s.idSector }}" class="font-bold text-sm hover:underline">{{ s.idSector }} · {{ s.nombre }}</a>
+          <span class="badge badge-{{ s.estadoActual }}" id="badge_{{ s.idSector }}">{{ s.estadoActual }}</span>
+        </div>
+        <div class="text-xs ag-muted">
+          Cultivo: <strong class="text-current">{{ s.zona.tipoCultivo if s.zona else 'N/A' }}</strong> ({{ s.zona.areaHectareas if s.zona else 0 }} ha, {{ s.zona.etapaFenologica if s.zona else '' }})<br/>
+          Nodo IoT: <code>{{ s.sensor.idNodo if s.sensor else 'N/A' }}</code> · Sensor: <strong id="sensorState_{{ s.idSector }}">{{ s.sensor.estadoOperativo if s.sensor else 'N/A' }}</strong> · Válvula: <strong id="valvulaState_{{ s.idSector }}">{{ 'ABIERTA' if s.valvulaAbierta else 'CERRADA' }}</strong>
+        </div>
+
+        <div class="ag-metrics">
+          <div class="ag-subpanel p-2 text-center">
+            <div class="text-base font-bold text-sky-400" id="hum_{{ s.idSector }}">{{ s.ultimaLectura.humedadSuelo if s.ultimaLectura else '--' }}%</div>
+            <div class="text-[11px] ag-muted">Humedad Suelo</div>
+          </div>
+          <div class="ag-subpanel p-2 text-center">
+            <div class="text-base font-bold text-orange-400" id="tsuelo_{{ s.idSector }}">{{ s.ultimaLectura.temperaturaSuelo if s.ultimaLectura else '--' }}°C</div>
+            <div class="text-[11px] ag-muted">Temp. Suelo</div>
+          </div>
+          <div class="ag-subpanel p-2 text-center">
+            <div class="text-base font-bold text-violet-400" id="hr_{{ s.idSector }}">{{ s.ultimaLectura.humedadRelativa if s.ultimaLectura else '--' }}%</div>
+            <div class="text-[11px] ag-muted">HR Ambiente</div>
+          </div>
+          <div class="ag-subpanel p-2 text-center">
+            <div class="text-base font-bold text-emerald-400" id="lluvia_{{ s.idSector }}">{{ s.pronostico.probabilidadLluvia }}%</div>
+            <div class="text-[11px] ag-muted" id="lluviaFuente_{{ s.idSector }}">Prob. Lluvia ({{ 'Caché' if s.pronostico.obtenidoDesdeCache else 'Live' }})</div>
+          </div>
+        </div>
+
+        <div class="mb-2">
+          <div class="flex justify-between text-[11px] ag-muted mb-1">
+            <span>Estado Hidrométrico vs Umbrales</span>
+            <span id="hudLabel_{{ s.idSector }}">{{ s.ultimaLectura.humedadSuelo if s.ultimaLectura else '--' }}%</span>
+          </div>
+          <div class="relative h-2.5 rounded-full overflow-hidden flex border border-white/10" id="hudBar_{{ s.idSector }}">
+            <div id="hudCrit_{{ s.idSector }}" class="bg-red-500/70" style="width: {{ s.umbralCritico }}%"></div>
+            <div id="hudMin_{{ s.idSector }}" class="bg-amber-500/70" style="width: {{ s.umbralMinimo - s.umbralCritico }}%"></div>
+            <div id="hudObj_{{ s.idSector }}" class="bg-emerald-500/70" style="width: {{ s.umbralObjetivo - s.umbralMinimo }}%"></div>
+            <div id="hudSat_{{ s.idSector }}" class="bg-sky-500/40" style="width: {{ 100 - s.umbralObjetivo }}%"></div>
+            <div id="hudMarker_{{ s.idSector }}" class="absolute top-0 bottom-0 w-1.5 bg-white shadow" style="left: {{ s.ultimaLectura.humedadSuelo if s.ultimaLectura else 0 }}%;"></div>
+          </div>
+        </div>
+
+        <div class="text-xs ag-muted">
+          <span id="umbralesTxt_{{ s.idSector }}">Umbrales: Crítico {{ s.umbralCritico }}% · Mínimo {{ s.umbralMinimo }}% · Objetivo {{ s.umbralObjetivo }}% | T_mín APIMeteo: {{ s.pronostico.tempMinimaEsperada }}°C</span>
+          <div id="cicloTxt_{{ s.idSector }}" class="text-sky-400 font-medium mt-0.5">
+            {% if s.cicloActivo %}
+              Ciclo activo {{ s.cicloActivo.idCiclo }}: {{ s.cicloActivo.estado }} ({{ s.cicloActivo.subestado or 'N/A' }}) · Lámina {{ s.cicloActivo.laminaMm }} mm
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="flex flex-wrap gap-3 text-[11px] ag-muted mt-2 mb-1">
+          <span class="inline-flex items-center gap-1"><span class="w-2.5 h-0.5 bg-sky-400 inline-block"></span>Humedad Suelo (%)</span>
+          <span class="inline-flex items-center gap-1"><span class="w-2.5 h-0.5 bg-orange-400 inline-block"></span>Temp. Suelo (°C)</span>
+          <span class="inline-flex items-center gap-1"><span class="w-2.5 h-0.5 bg-emerald-500 inline-block"></span>Obj / Mín / Crít</span>
+        </div>
+
+        <a href="/sectores/{{ s.idSector }}" class="block group" title="Abrir vista detallada de gráfica y gemelo 3D">
+          <div id="chart_{{ s.idSector }}" class="transition group-hover:ring-1 group-hover:ring-sky-400 rounded-lg"></div>
+        </a>
+      </div>
+
+      <div class="pt-1 flex flex-wrap justify-between items-center gap-2">
+        <a href="/sectores/{{ s.idSector }}" class="btn btn-blue btn-sm">Ver Gráfica Detallada y Gemelo 3D &rarr;</a>
+        {% if snapshot.usuario %}
+        <div class="flex flex-wrap gap-1.5">
+          {% if snapshot.usuario.rol in ['GESTOR_SENSORES', 'ADMINISTRADOR'] and s.sensor %}
+            <button id="toggleBtn_{{ s.idSector }}" class="btn btn-secondary btn-sm" onclick="toggleNodo('{{ s.sensor.idNodo }}', this.dataset.next === 'true')" data-next="{{ 'false' if s.sensor.estadoOperativo == 'ACTIVO' else 'true' }}">
+              {{ 'Apagar Sensor' if s.sensor.estadoOperativo == 'ACTIVO' else 'Encender Sensor' }}
+            </button>
+          {% endif %}
+          {% if snapshot.usuario.rol in ['TECNICO_AGRICOLA', 'ADMINISTRADOR'] %}
+            <button id="resetValvBtn_{{ s.idSector }}" class="btn btn-amber btn-sm" style="display:{{ 'inline-flex' if s.estadoActual == 'ERROR_VALVULA' else 'none' }}" onclick="restablecerSector('{{ s.idSector }}')">Restablecer Válvula</button>
+          {% endif %}
+        </div>
+        {% endif %}
+      </div>
+
+      {% if snapshot.usuario and snapshot.usuario.rol in ['TECNICO_AGRICOLA', 'ADMINISTRADOR'] %}
+      <div class="flex flex-wrap gap-1.5 items-center pt-1 border-t border-white/10">
+        <input type="number" step="0.5" id="crit_{{ s.idSector }}" value="{{ s.umbralCritico }}" style="width:62px" title="Crítico %" />
+        <input type="number" step="0.5" id="min_{{ s.idSector }}" value="{{ s.umbralMinimo }}" style="width:62px" title="Mínimo %" />
+        <input type="number" step="0.5" id="obj_{{ s.idSector }}" value="{{ s.umbralObjetivo }}" style="width:62px" title="Objetivo %" />
+        <button class="btn btn-blue btn-sm" onclick="guardarUmbrales('{{ s.idSector }}')">Guardar Umbrales</button>
+      </div>
+      {% endif %}
+    </article>
+    {% endfor %}
+  </section>
+
+  <section class="ag-grid-2">
+    <div class="ag-card shadow-sm">
+      <h2 class="m-0 mb-3 text-base font-semibold">Alertas Tempranas y Eventos Fitosanitarios (RF-05 / RF-09)</h2>
+      <table>
+        <thead><tr><th>Sector</th><th>Tipo</th><th>Severidad</th><th>Mensaje</th><th>Estado</th></tr></thead>
+        <tbody id="tbodyAlertas">
+          {% for a in snapshot.alertas[:10] %}
+          <tr>
+            <td>{{ a.idSector }}</td>
+            <td><strong>{{ a.tipoAlerta }}</strong></td>
+            <td><span class="badge badge-{{ a.nivelSeveridad }}">{{ a.nivelSeveridad }}</span></td>
+            <td>{{ a.mensaje }} <br/><small class="ag-muted">{{ a.timestamp }}</small></td>
+            <td>
+              {% if a.reconocida %}
+                Reconocida
+              {% elif snapshot.usuario and snapshot.usuario.rol in ['TECNICO_AGRICOLA', 'ADMINISTRADOR'] %}
+                <button class="btn btn-sm btn-secondary" onclick="reconocerAlerta('{{ a.idAlerta }}')">Reconocer</button>
+              {% else %}
+                Activa
+              {% endif %}
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="5" class="ag-muted">Sin alertas registradas.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="ag-card shadow-sm">
+      <h2 class="m-0 mb-3 text-base font-semibold">Historial de Ciclos de Riego (CicloRiego FSM)</h2>
+      <table>
+        <thead><tr><th>Ciclo</th><th>Sector</th><th>Estado</th><th>Lámina</th><th>Humedad</th><th>Motivo</th></tr></thead>
+        <tbody id="tbodyCiclos">
+          {% for c in snapshot.ciclos[:10] %}
+          <tr>
+            <td><code>{{ c.idCiclo }}</code></td>
+            <td>{{ c.idSector }}</td>
+            <td><strong>{{ c.estado }}</strong></td>
+            <td>{{ c.laminaMm }} mm</td>
+            <td>{{ c.humedadInicial }}% &rarr; {{ c.humedadFinal if c.humedadFinal is not none else '--' }}%</td>
+            <td>{{ c.motivoCierre }}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="6" class="ag-muted">No se han ejecutado ciclos aún.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  {% if auditoria %}
+  <section class="ag-card shadow-sm">
+    <h2 class="m-0 mb-3 text-base font-semibold">Bitácora de Auditoría Estructurada (RNF-07 — Solo Administrador)</h2>
+    <table>
+      <thead><tr><th>Usuario</th><th>Operación</th><th>Detalle</th><th>Timestamp</th></tr></thead>
+      <tbody>
+        {% for ev in auditoria[:12] %}
+        <tr>
+          <td>{{ ev.usuario }}</td>
+          <td><code>{{ ev.operacion }}</code></td>
+          <td>{{ ev.detalle }}</td>
+          <td>{{ ev.timestamp_iso }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+  {% endif %}
+</main>
+
+<div id="toast" class="toast"></div>
+
+<script>
+const SNAPSHOT_INICIAL = {{ snapshot|tojson }};
+
+function aplicarTemaInicial() {
+  const guardado = localStorage.getItem('agritech-theme');
+  const html = document.documentElement;
+  if (guardado === 'light') {
+    html.classList.remove('dark');
+  } else {
+    html.classList.add('dark');
+  }
+  const btn = document.getElementById('btnTema');
+  if (btn) btn.textContent = html.classList.contains('dark') ? 'Modo Claro' : 'Modo Oscuro';
+}
+
+function alternarTema() {
+  const html = document.documentElement;
+  html.classList.toggle('dark');
+  localStorage.setItem('agritech-theme', html.classList.contains('dark') ? 'dark' : 'light');
+  const btn = document.getElementById('btnTema');
+  if (btn) btn.textContent = html.classList.contains('dark') ? 'Modo Claro' : 'Modo Oscuro';
+}
+
+function showToast(msg, reloadAfter = false) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.style.display = 'block';
+  setTimeout(() => {
+    el.style.display = 'none';
+    if (reloadAfter) window.location.reload();
+  }, 1600);
+}
+
+function escapeHtml(txt) {
+  return String(txt || '')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function renderSvgChart(containerId, sector) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  const hum = sector.historialHumedad || [];
+  const temps = sector.historialTempSuelo || [];
+  const times = sector.historialTimestamps || [];
+  const w = 320, h = 112, padL = 26, padR = 30, padT = 10, padB = 18;
+  const plotW = w - padL - padR;
+  const plotH = h - padT - padB;
+  const yPct = (val) => padT + plotH - (Math.max(0, Math.min(100, val)) / 100) * plotH;
+  const yTmp = (val) => padT + plotH - (Math.max(0, Math.min(50, val)) / 50) * plotH;
+
+  if (hum.length === 0) {
+    el.innerHTML = '<div class="text-xs ag-muted p-2">Esperando telemetría...</div>';
+    return;
+  }
+
+  const xAt = (i, len) => len > 1 ? padL + (i * plotW / (len - 1)) : padL + plotW / 2;
+  const humPts = hum.map((v, i) => [xAt(i, hum.length), yPct(v)]);
+  const areaPts = [
+    `${humPts[0][0].toFixed(1)},${(padT + plotH).toFixed(1)}`,
+    ...humPts.map(p => `${p[0].toFixed(1)},${p[1].toFixed(1)}`),
+    `${humPts[humPts.length - 1][0].toFixed(1)},${(padT + plotH).toFixed(1)}`
+  ].join(' ');
+  const polyHum = humPts.map(p => `${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' ');
+  const polyTmp = temps.map((v, i) => `${xAt(i, temps.length).toFixed(1)},${yTmp(v).toFixed(1)}`).join(' ');
+
+  const yObj = yPct(sector.umbralObjetivo).toFixed(1);
+  const yMin = yPct(sector.umbralMinimo).toFixed(1);
+  const yCrit = yPct(sector.umbralCritico).toFixed(1);
+  const lastH = humPts[humPts.length - 1];
+  const lastT = temps.length ? [xAt(temps.length - 1, temps.length), yTmp(temps[temps.length - 1])] : null;
+
+  const tStart = times.length ? times[0] : '';
+  const tEnd = times.length ? times[times.length - 1] : '';
+
+  el.innerHTML = `
+    <svg class="sparkline" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id="grad_${sector.idSector}" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.35" />
+          <stop offset="100%" stop-color="#38bdf8" stop-opacity="0.02" />
+        </linearGradient>
+      </defs>
+      <line x1="${padL}" y1="${yObj}" x2="${w - padR}" y2="${yObj}" stroke="#22c55e" stroke-dasharray="3,3" stroke-width="0.9" opacity="0.75" />
+      <text x="2" y="${parseFloat(yObj) + 3}" fill="#22c55e" font-size="7.5">${sector.umbralObjetivo}%</text>
+      <line x1="${padL}" y1="${yMin}" x2="${w - padR}" y2="${yMin}" stroke="#f59e0b" stroke-dasharray="3,3" stroke-width="0.9" opacity="0.75" />
+      <text x="2" y="${parseFloat(yMin) + 3}" fill="#f59e0b" font-size="7.5">${sector.umbralMinimo}%</text>
+      <line x1="${padL}" y1="${yCrit}" x2="${w - padR}" y2="${yCrit}" stroke="#ef4444" stroke-dasharray="3,3" stroke-width="0.9" opacity="0.75" />
+      <text x="2" y="${parseFloat(yCrit) + 3}" fill="#ef4444" font-size="7.5">${sector.umbralCritico}%</text>
+
+      <polygon fill="url(#grad_${sector.idSector})" points="${areaPts}" />
+      <polyline fill="none" stroke="#38bdf8" stroke-width="2" points="${polyHum}" />
+      ${temps.length ? `<polyline fill="none" stroke="#fb923c" stroke-width="1.4" stroke-dasharray="2,2" points="${polyTmp}" />` : ''}
+
+      ${humPts.map((p, idx) => idx === humPts.length - 1
+        ? `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="3.5" fill="#38bdf8" stroke="#fff" stroke-width="1.2" />`
+        : `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="1.6" fill="#7dd3fc" />`).join('')}
+      ${lastT ? `<circle cx="${lastT[0].toFixed(1)}" cy="${lastT[1].toFixed(1)}" r="2.6" fill="#fb923c" />` : ''}
+
+      <text x="${w - padR + 2}" y="${lastH[1].toFixed(1)}" fill="#38bdf8" font-size="8" font-weight="bold">${hum[hum.length - 1]}%</text>
+      ${temps.length ? `<text x="${w - padR + 2}" y="${(lastT[1] + 7).toFixed(1)}" fill="#fb923c" font-size="7">${temps[temps.length - 1]}°C</text>` : ''}
+      <text x="${padL}" y="${h - 4}" fill="#64748b" font-size="7.5">${tStart}</text>
+      <text x="${w - padR - 22}" y="${h - 4}" fill="#94a3b8" font-size="7.5">${tEnd}</text>
+    </svg>
+  `;
+}
+
+function renderizarTablero(snapshot) {
+  const relojEl = document.getElementById('relojBadge');
+  if (relojEl && snapshot.relojSimulado) {
+    relojEl.textContent = 'Reloj Simulado: ' + snapshot.relojSimulado;
+  }
+
+  const usuario = snapshot.usuario;
+  const puedeReconocer = usuario && (usuario.rol === 'TECNICO_AGRICOLA' || usuario.rol === 'ADMINISTRADOR');
+
+  (snapshot.sectores || []).forEach(s => {
+    const badge = document.getElementById('badge_' + s.idSector);
+    if (badge) {
+      badge.textContent = s.estadoActual;
+      badge.className = 'badge badge-' + s.estadoActual;
+    }
+    const senEl = document.getElementById('sensorState_' + s.idSector);
+    if (senEl && s.sensor) senEl.textContent = s.sensor.estadoOperativo;
+
+    const valEl = document.getElementById('valvulaState_' + s.idSector);
+    if (valEl) valEl.textContent = s.valvulaAbierta ? 'ABIERTA' : 'CERRADA';
+
+    const lec = s.ultimaLectura;
+    const humEl = document.getElementById('hum_' + s.idSector);
+    if (humEl) humEl.textContent = (lec ? lec.humedadSuelo : '--') + '%';
+    const tEl = document.getElementById('tsuelo_' + s.idSector);
+    if (tEl) tEl.textContent = (lec ? lec.temperaturaSuelo : '--') + '°C';
+    const hrEl = document.getElementById('hr_' + s.idSector);
+    if (hrEl) hrEl.textContent = (lec ? lec.humedadRelativa : '--') + '%';
+
+    const llEl = document.getElementById('lluvia_' + s.idSector);
+    if (llEl && s.pronostico) llEl.textContent = s.pronostico.probabilidadLluvia + '%';
+    const llF = document.getElementById('lluviaFuente_' + s.idSector);
+    if (llF && s.pronostico) llF.textContent = `Prob. Lluvia (${s.pronostico.obtenidoDesdeCache ? 'Caché' : 'Live'})`;
+
+    const hudCrit = document.getElementById('hudCrit_' + s.idSector);
+    const hudMin = document.getElementById('hudMin_' + s.idSector);
+    const hudObj = document.getElementById('hudObj_' + s.idSector);
+    const hudSat = document.getElementById('hudSat_' + s.idSector);
+    const hudMarker = document.getElementById('hudMarker_' + s.idSector);
+    const hudLabel = document.getElementById('hudLabel_' + s.idSector);
+    if (hudCrit && hudMin && hudObj && hudSat) {
+      hudCrit.style.width = s.umbralCritico + '%';
+      hudMin.style.width = Math.max(0, s.umbralMinimo - s.umbralCritico) + '%';
+      hudObj.style.width = Math.max(0, s.umbralObjetivo - s.umbralMinimo) + '%';
+      hudSat.style.width = Math.max(0, 100 - s.umbralObjetivo) + '%';
+    }
+    if (hudMarker && lec) {
+      hudMarker.style.left = Math.min(98, Math.max(0, lec.humedadSuelo)) + '%';
+    }
+    if (hudLabel && lec) {
+      hudLabel.textContent = lec.humedadSuelo + '% actual';
+    }
+
+    const umbEl = document.getElementById('umbralesTxt_' + s.idSector);
+    if (umbEl && s.pronostico) {
+      umbEl.textContent = `Umbrales: Crítico ${s.umbralCritico}% · Mínimo ${s.umbralMinimo}% · Objetivo ${s.umbralObjetivo}% | T_mín APIMeteo: ${s.pronostico.tempMinimaEsperada}°C`;
+    }
+    const cicEl = document.getElementById('cicloTxt_' + s.idSector);
+    if (cicEl) {
+      cicEl.textContent = s.cicloActivo
+        ? `Ciclo activo ${s.cicloActivo.idCiclo}: ${s.cicloActivo.estado} (${s.cicloActivo.subestado || 'N/A'}) · Lámina ${s.cicloActivo.laminaMm} mm`
+        : '';
+    }
+
+    const toggleBtn = document.getElementById('toggleBtn_' + s.idSector);
+    if (toggleBtn && s.sensor) {
+      const activo = s.sensor.estadoOperativo === 'ACTIVO';
+      toggleBtn.textContent = activo ? 'Apagar Sensor' : 'Encender Sensor';
+      toggleBtn.dataset.next = activo ? 'false' : 'true';
+    }
+    const resetBtn = document.getElementById('resetValvBtn_' + s.idSector);
+    if (resetBtn) {
+      resetBtn.style.display = s.estadoActual === 'ERROR_VALVULA' ? 'inline-flex' : 'none';
+    }
+
+    renderSvgChart('chart_' + s.idSector, s);
+  });
+
+  const tbAlertas = document.getElementById('tbodyAlertas');
+  if (tbAlertas) {
+    const alertas = (snapshot.alertas || []).slice(0, 10);
+    if (alertas.length === 0) {
+      tbAlertas.innerHTML = '<tr><td colspan="5" class="ag-muted">Sin alertas registradas.</td></tr>';
+    } else {
+      tbAlertas.innerHTML = alertas.map(a => `
+        <tr>
+          <td>${escapeHtml(a.idSector)}</td>
+          <td><strong>${escapeHtml(a.tipoAlerta)}</strong></td>
+          <td><span class="badge badge-${escapeHtml(a.nivelSeveridad)}">${escapeHtml(a.nivelSeveridad)}</span></td>
+          <td>${escapeHtml(a.mensaje)}<br/><small class="ag-muted">${escapeHtml(a.timestamp)}</small></td>
+          <td>${a.reconocida ? 'Reconocida' : (puedeReconocer ? `<button class="btn btn-sm btn-secondary" onclick="reconocerAlerta('${escapeHtml(a.idAlerta)}')">Reconocer</button>` : 'Activa')}</td>
+        </tr>
+      `).join('');
+    }
+  }
+
+  const tbCiclos = document.getElementById('tbodyCiclos');
+  if (tbCiclos) {
+    const ciclos = (snapshot.ciclos || []).slice(0, 10);
+    if (ciclos.length === 0) {
+      tbCiclos.innerHTML = '<tr><td colspan="6" class="ag-muted">No se han ejecutado ciclos aún.</td></tr>';
+    } else {
+      tbCiclos.innerHTML = ciclos.map(c => `
+        <tr>
+          <td><code>${escapeHtml(c.idCiclo)}</code></td>
+          <td>${escapeHtml(c.idSector)}</td>
+          <td><strong>${escapeHtml(c.estado)}</strong></td>
+          <td>${escapeHtml(c.laminaMm)} mm</td>
+          <td>${escapeHtml(c.humedadInicial)}% &rarr; ${c.humedadFinal !== null && c.humedadFinal !== undefined ? escapeHtml(c.humedadFinal) : '--'}%</td>
+          <td>${escapeHtml(c.motivoCierre)}</td>
+        </tr>
+      `).join('');
+    }
+  }
+}
+
+async function actualizarTableroEnVivo() {
+  try {
+    const res = await fetch('/api/estado', { cache: 'no-store' });
+    if (res.ok) {
+      const snapshot = await res.json();
+      renderizarTablero(snapshot);
+    }
+  } catch (e) {
+    // Reintento silencioso en el próximo ciclo
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  aplicarTemaInicial();
+  renderizarTablero(SNAPSHOT_INICIAL);
+  setInterval(actualizarTableroEnVivo, 2500);
+});
+
+async function apiJson(url, method, body) {
+  const res = await fetch(url, {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+    body: body ? JSON.stringify(body) : undefined
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    alert('Error HTTP ' + res.status + ': ' + (data.error || 'Operación rechazada'));
+    return null;
+  }
+  return data;
+}
+
+async function ejecutarTick() {
+  const res = await apiJson('/api/simulador/tick', 'POST', {});
+  if (res) {
+    await actualizarTableroEnVivo();
+    showToast('Tick de simulación ejecutado (' + res.resultados.length + ' nodos)');
+  }
+}
+
+async function lanzarEscenario(escenario) {
+  const idSector = document.getElementById('simSector').value;
+  const res = await apiJson('/api/simulador/escenario', 'POST', { idSector, escenario });
+  if (res) {
+    await actualizarTableroEnVivo();
+    showToast('Escenario "' + escenario + '" ejecutado en ' + idSector);
+  }
+}
+
+async function toggleNodo(idNodo, encendido) {
+  const res = await apiJson('/api/nodos/' + idNodo + '/estado', 'PUT', { encendido });
+  if (res) {
+    await actualizarTableroEnVivo();
+    showToast('Nodo ' + idNodo + ' -> ' + res.estadoOperativo);
+  }
+}
+
+async function guardarUmbrales(idSector) {
+  const umbralCritico = parseFloat(document.getElementById('crit_' + idSector).value);
+  const umbralMinimo = parseFloat(document.getElementById('min_' + idSector).value);
+  const umbralObjetivo = parseFloat(document.getElementById('obj_' + idSector).value);
+  const res = await apiJson('/api/sectores/' + idSector + '/umbrales', 'PUT', {
+    umbralCritico, umbralMinimo, umbralObjetivo
+  });
+  if (res) {
+    await actualizarTableroEnVivo();
+    showToast('Umbrales actualizados para ' + idSector);
+  }
+}
+
+async function restablecerSector(idSector) {
+  const res = await apiJson('/api/sectores/' + idSector + '/restablecer', 'POST', {});
+  if (res) {
+    await actualizarTableroEnVivo();
+    showToast('Sector ' + idSector + ' restablecido a ' + res.estadoActual);
+  }
+}
+
+async function reconocerAlerta(idAlerta) {
+  const res = await apiJson('/api/alertas/' + idAlerta + '/reconocer', 'POST', {});
+  if (res) {
+    await actualizarTableroEnVivo();
+    showToast('Alerta ' + idAlerta + ' reconocida');
+  }
+}
+</script>
+</body>
+</html>

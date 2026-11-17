@@ -1,0 +1,1043 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ sector.idSector }} · {{ sector.nombre }} — Detalle Telemetría y Gemelo 3D | AgriTech Precision</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.186.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.186.0/examples/jsm/"
+    }
+  }
+  </script>
+  <style type="text/tailwindcss">
+    @import "tailwindcss";
+
+    @theme {
+      --color-background: oklch(98.5% 0.004 247);
+      --color-foreground: oklch(16% 0.025 255);
+      --color-card: oklch(100% 0 0);
+      --color-card-foreground: oklch(16% 0.025 255);
+      --color-panel-alt: oklch(95.5% 0.008 247);
+      --color-primary: oklch(52% 0.17 152);
+      --color-primary-foreground: oklch(98% 0.01 152);
+      --color-secondary: oklch(92% 0.01 250);
+      --color-secondary-foreground: oklch(20% 0.02 255);
+      --color-muted: oklch(94% 0.008 250);
+      --color-muted-foreground: oklch(45% 0.02 255);
+      --color-accent: oklch(92% 0.03 220);
+      --color-accent-foreground: oklch(25% 0.04 220);
+      --color-destructive: oklch(55% 0.22 25);
+      --color-destructive-foreground: oklch(98% 0.01 25);
+      --color-border: oklch(87% 0.012 250);
+      --color-ring: oklch(58% 0.16 155);
+
+      --radius-sm: 0.375rem;
+      --radius-md: 0.5rem;
+      --radius-lg: 0.75rem;
+      --radius-xl: 1rem;
+
+      --animate-fade-in: fade-in 0.25s ease-out;
+      --animate-slide-in: slide-in 0.3s ease-out;
+
+      @keyframes fade-in {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+      @keyframes slide-in {
+        from { transform: translateY(-0.4rem); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+      }
+    }
+
+    @custom-variant dark (&:where(.dark, .dark *));
+
+    .dark {
+      --color-background: oklch(15% 0.025 258);
+      --color-foreground: oklch(97% 0.008 250);
+      --color-card: oklch(20.5% 0.025 256);
+      --color-card-foreground: oklch(97% 0.008 250);
+      --color-panel-alt: oklch(12.5% 0.022 258);
+      --color-primary: oklch(62% 0.17 152);
+      --color-primary-foreground: oklch(99% 0.005 152);
+      --color-secondary: oklch(27% 0.022 256);
+      --color-secondary-foreground: oklch(96% 0.008 250);
+      --color-muted: oklch(26% 0.02 256);
+      --color-muted-foreground: oklch(70% 0.02 250);
+      --color-accent: oklch(28% 0.04 225);
+      --color-accent-foreground: oklch(95% 0.02 225);
+      --color-destructive: oklch(52% 0.2 25);
+      --color-destructive-foreground: oklch(98% 0.01 25);
+      --color-border: oklch(32% 0.022 256);
+      --color-ring: oklch(65% 0.16 155);
+    }
+  </style>
+  <style>
+    :root {
+      --bg-fallback: #f8fafc;
+      --fg-fallback: #0f172a;
+      --card-fallback: #ffffff;
+      --alt-fallback: #f1f5f9;
+      --border-fallback: #cbd5e1;
+      --muted-fallback: #475569;
+    }
+    html.dark {
+      --bg-fallback: #0f172a;
+      --fg-fallback: #f8fafc;
+      --card-fallback: #1e293b;
+      --alt-fallback: #0b1322;
+      --border-fallback: #334155;
+      --muted-fallback: #94a3b8;
+    }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background: var(--color-background, var(--bg-fallback));
+      color: var(--color-foreground, var(--fg-fallback));
+      line-height: 1.45;
+    }
+    .ag-card {
+      background: var(--color-card, var(--card-fallback));
+      border: 1px solid var(--color-border, var(--border-fallback));
+      border-radius: var(--radius-xl, 12px);
+      padding: 1rem 1.2rem;
+    }
+    .ag-subpanel {
+      background: var(--color-panel-alt, var(--alt-fallback));
+      border: 1px solid var(--color-border, var(--border-fallback));
+      border-radius: var(--radius-lg, 8px);
+    }
+    .ag-muted { color: var(--color-muted-foreground, var(--muted-fallback)); }
+    .ag-header {
+      background: linear-gradient(90deg, #064e3b, #0f172a);
+      border-bottom: 1px solid var(--color-border, var(--border-fallback));
+      color: #f8fafc;
+    }
+    .badge {
+      display: inline-block; padding: 0.22rem 0.6rem; border-radius: 6px;
+      font-size: 0.74rem; font-weight: 700; text-transform: uppercase;
+    }
+    .badge-OPTIMO { background: rgba(34,197,94,0.18); color: #22c55e; border: 1px solid #22c55e; }
+    .badge-REGANDO { background: rgba(56,189,248,0.18); color: #0284c7; border: 1px solid #38bdf8; }
+    html.dark .badge-REGANDO { color: #7dd3fc; }
+    .badge-RIEGO_POSPUESTO { background: rgba(245,158,11,0.18); color: #d97706; border: 1px solid #f59e0b; }
+    html.dark .badge-RIEGO_POSPUESTO { color: #fbbf24; }
+    .badge-ALERTA_FITOSANITARIA, .badge-ERROR_VALVULA, .badge-CRITICA { background: rgba(239,68,68,0.2); color: #ef4444; border: 1px solid #ef4444; }
+    html.dark .badge-ALERTA_FITOSANITARIA, html.dark .badge-ERROR_VALVULA, html.dark .badge-CRITICA { color: #fca5a5; }
+    .badge-REQUIERE_RIEGO, .badge-ADVERTENCIA { background: rgba(245,158,11,0.2); color: #d97706; border: 1px solid #f59e0b; }
+    html.dark .badge-REQUIERE_RIEGO, html.dark .badge-ADVERTENCIA { color: #fcd34d; }
+    .btn {
+      cursor: pointer; border: none; border-radius: 8px;
+      padding: 0.45rem 0.85rem; font-size: 0.82rem; font-weight: 600;
+      color: #fff; background: #16a34a; text-decoration: none; display: inline-flex; align-items: center; gap: 0.35rem;
+    }
+    .btn:hover { opacity: 0.92; }
+    .btn-secondary { background: #334155; }
+    .btn-blue { background: #0284c7; }
+    .btn-amber { background: #d97706; }
+    .btn-red { background: #dc2626; }
+    .btn-sm { padding: 0.32rem 0.65rem; font-size: 0.75rem; }
+    .live-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #22c55e; margin-right: 5px; animation: pulseLive 1.4s infinite; }
+    @keyframes pulseLive { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.45; transform: scale(0.8); } }
+    input, select {
+      background: var(--color-panel-alt, var(--alt-fallback));
+      color: var(--color-foreground, var(--fg-fallback));
+      border: 1px solid var(--color-border, var(--border-fallback));
+      border-radius: 6px; padding: 0.35rem 0.5rem; font-size: 0.82rem;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+    th, td { text-align: left; padding: 0.45rem 0.5rem; border-bottom: 1px solid var(--color-border, var(--border-fallback)); }
+    th { color: var(--color-muted-foreground, var(--muted-fallback)); font-weight: 600; }
+    .toast {
+      position: fixed; bottom: 1rem; right: 1rem; z-index: 50;
+      background: #0f172a; border: 1px solid #22c55e; color: #fff;
+      padding: 0.75rem 1rem; border-radius: 8px; display: none; max-width: 380px;
+    }
+  </style>
+</head>
+<body class="min-h-screen antialiased">
+<header class="ag-header px-6 py-4 flex flex-wrap justify-between items-center gap-4">
+  <div class="flex flex-col gap-1">
+    <div class="flex items-center gap-2 text-xs text-emerald-200">
+      <a href="/" class="hover:underline text-emerald-300 font-semibold">&larr; Volver al Tablero General</a>
+      <span>/</span>
+      <span>Telemetría Detallada &amp; Gemelo 3D</span>
+      <span>/</span>
+      <strong>{{ sector.idSector }}</strong>
+    </div>
+    <h1 class="m-0 text-xl font-bold tracking-tight flex items-center gap-3">
+      <span>{{ sector.idSector }} · {{ sector.nombre }}</span>
+      <span class="badge badge-{{ sector.estadoActual }}" id="detBadge">{{ sector.estadoActual }}</span>
+    </h1>
+  </div>
+  <nav class="flex flex-wrap items-center gap-2">
+    {% for s in snapshot.sectores %}
+      <a href="/sectores/{{ s.idSector }}" class="px-3 py-1 rounded-full text-xs font-semibold border transition {{ 'bg-emerald-500/25 border-emerald-400 text-emerald-100' if s.idSector == sector.idSector else 'bg-white/10 hover:bg-white/20 border-white/15 text-slate-100' }}">
+        {{ s.idSector }}
+      </a>
+    {% endfor %}
+    <button type="button" onclick="alternarTema()" id="btnTema" class="px-3 py-1 rounded-full text-xs font-semibold bg-white/10 hover:bg-white/20 border border-white/20 text-slate-100 cursor-pointer">Modo Claro</button>
+    <span class="px-3 py-1 rounded-full text-xs font-semibold bg-white/10 border border-white/15"><span class="live-dot"></span>EN VIVO (2.5s)</span>
+    <span class="px-3 py-1 rounded-full text-xs font-semibold bg-white/10 border border-white/15" id="relojBadge">Reloj Simulado: {{ snapshot.relojSimulado }}</span>
+    {% if snapshot.usuario %}
+      <span class="px-3 py-1 rounded-full text-xs font-semibold bg-sky-500/20 border border-sky-400/40">{{ snapshot.usuario.nombre }} ({{ snapshot.usuario.rol }})</span>
+    {% endif %}
+  </nav>
+</header>
+
+<main class="max-w-[1440px] mx-auto p-5 grid gap-5 animate-[var(--animate-fade-in)]">
+  <!-- KPI Strip -->
+  <section class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+    <div class="ag-card p-3 text-center">
+      <div class="text-xs ag-muted">Humedad Suelo</div>
+      <div class="text-2xl font-bold text-sky-400 mt-1" id="kpiHum">{{ sector.ultimaLectura.humedadSuelo if sector.ultimaLectura else '--' }}%</div>
+      <div class="text-[11px] ag-muted" id="kpiUmbrales">Obj: {{ sector.umbralObjetivo }}% · Mín: {{ sector.umbralMinimo }}%</div>
+    </div>
+    <div class="ag-card p-3 text-center">
+      <div class="text-xs ag-muted">Temp. Suelo</div>
+      <div class="text-2xl font-bold text-orange-400 mt-1" id="kpiTempSuelo">{{ sector.ultimaLectura.temperaturaSuelo if sector.ultimaLectura else '--' }}°C</div>
+      <div class="text-[11px] ag-muted">Estrés térmico &ge; 35°C</div>
+    </div>
+    <div class="ag-card p-3 text-center">
+      <div class="text-xs ag-muted">Temp. Ambiente</div>
+      <div class="text-2xl font-bold text-yellow-400 mt-1" id="kpiTempAmb">{{ sector.ultimaLectura.temperaturaAmbiente if sector.ultimaLectura else '--' }}°C</div>
+      <div class="text-[11px] ag-muted" id="kpiTMin">T_mín APIMeteo: {{ sector.pronostico.tempMinimaEsperada }}°C</div>
+    </div>
+    <div class="ag-card p-3 text-center">
+      <div class="text-xs ag-muted">HR Ambiente</div>
+      <div class="text-2xl font-bold text-violet-400 mt-1" id="kpiHR">{{ sector.ultimaLectura.humedadRelativa if sector.ultimaLectura else '--' }}%</div>
+      <div class="text-[11px] ag-muted">Fúngico &gt; 85% HR</div>
+    </div>
+    <div class="ag-card p-3 text-center">
+      <div class="text-xs ag-muted">Prob. Lluvia</div>
+      <div class="text-2xl font-bold text-emerald-400 mt-1" id="kpiLluvia">{{ sector.pronostico.probabilidadLluvia }}%</div>
+      <div class="text-[11px] ag-muted" id="kpiFuenteLluvia">{{ 'Caché 3h' if sector.pronostico.obtenidoDesdeCache else 'APIMeteo Live' }}</div>
+    </div>
+    <div class="ag-card p-3 text-center">
+      <div class="text-xs ag-muted">Actuador &amp; Sensor</div>
+      <div class="text-base font-bold mt-1" id="kpiValvula">{{ 'VÁLVULA ABIERTA' if sector.valvulaAbierta else 'VÁLVULA CERRADA' }}</div>
+      <div class="text-[11px] ag-muted" id="kpiSensor">{{ sector.sensor.idNodo if sector.sensor else 'N/A' }} · {{ sector.sensor.estadoOperativo if sector.sensor else 'N/A' }}</div>
+    </div>
+  </section>
+
+  <!-- Main Interactive Multi-Line Chart + Three.js 3D Digital Twin -->
+  <section class="grid grid-cols-1 xl:grid-cols-3 gap-5">
+    <div class="ag-card xl:col-span-2 flex flex-col gap-3">
+      <div class="flex flex-wrap justify-between items-center gap-2">
+        <div>
+          <h2 class="m-0 text-base font-bold">Gráfica Interactiva Multi-Variable ({{ sector.idSector }} — Últimas 30 Lecturas)</h2>
+          <p class="m-0 text-xs ag-muted">Pasa el cursor sobre cualquier punto para inspeccionar valores exactos o activa/desactiva series individuales.</p>
+        </div>
+        <div class="flex flex-wrap gap-3 text-xs">
+          <label class="inline-flex items-center gap-1.5 cursor-pointer">
+            <input type="checkbox" id="chkHumSuelo" checked onchange="renderMainDetailChart(SECTOR_ACTUAL)" />
+            <span class="w-3 h-0.5 bg-sky-400 inline-block"></span> Humedad Suelo (%)
+          </label>
+          <label class="inline-flex items-center gap-1.5 cursor-pointer">
+            <input type="checkbox" id="chkTempSuelo" checked onchange="renderMainDetailChart(SECTOR_ACTUAL)" />
+            <span class="w-3 h-0.5 bg-orange-400 inline-block"></span> Temp. Suelo (°C)
+          </label>
+          <label class="inline-flex items-center gap-1.5 cursor-pointer">
+            <input type="checkbox" id="chkHumRel" checked onchange="renderMainDetailChart(SECTOR_ACTUAL)" />
+            <span class="w-3 h-0.5 bg-violet-400 inline-block"></span> HR Ambiente (%)
+          </label>
+          <label class="inline-flex items-center gap-1.5 cursor-pointer">
+            <input type="checkbox" id="chkUmbrales" checked onchange="renderMainDetailChart(SECTOR_ACTUAL)" />
+            <span class="w-3 h-0.5 bg-emerald-500 inline-block"></span> Umbrales Agronómicos
+          </label>
+        </div>
+      </div>
+
+      <div class="relative ag-subpanel p-2" id="mainChartContainer">
+        <div id="mainChartSvgHost"></div>
+        <div id="chartTooltip" class="hidden absolute pointer-events-none z-20 rounded-lg border border-slate-600 bg-slate-950/95 text-slate-100 text-xs px-3 py-2 shadow-xl"></div>
+      </div>
+    </div>
+
+    <!-- Three.js 3D Digital Twin -->
+    <div class="ag-card flex flex-col justify-between gap-3">
+      <div>
+        <div class="flex justify-between items-center gap-2">
+          <h2 class="m-0 text-base font-bold">Gemelo Digital 3D (Three.js r186)</h2>
+          <span class="text-[11px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40" id="twinStatusLabel">Iniciando WebGL...</span>
+        </div>
+        <p class="m-0 mt-1 text-xs ag-muted">
+          Cultivo: <strong>{{ sector.zona.tipoCultivo if sector.zona else 'N/A' }}</strong> ({{ sector.zona.areaHectareas if sector.zona else 0 }} ha) ·
+          Color del suelo, tabla de agua, actuador de electroválvula y baliza del nodo sincronizados en vivo.
+        </p>
+      </div>
+      <div id="threeTwinMount" class="ag-subpanel w-full h-[300px] overflow-hidden relative flex items-center justify-center"></div>
+      <div class="text-xs ag-muted flex flex-wrap justify-between gap-2" id="twinMetaFooter">
+        <span>Baliza: Verde=Óptimo · Azul=Regando · Ámbar=Pospuesto · Rojo=Alerta/Error</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Two Separated Unambiguous Single-Domain Sub-Charts -->
+  <section class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+    <div class="ag-card">
+      <div class="flex justify-between items-center mb-2">
+        <h3 class="m-0 text-sm font-bold">Gráfica 1 — Hidrometría Exclusiva (Humedad del Suelo vs Umbrales)</h3>
+        <span class="text-[11px] ag-muted">Escala única 0% – 100%</span>
+      </div>
+      <div id="hidroChartContainer" class="ag-subpanel p-2"></div>
+    </div>
+    <div class="ag-card">
+      <div class="flex justify-between items-center mb-2">
+        <h3 class="m-0 text-sm font-bold">Gráfica 2 — Termometría Exclusiva (Suelo, Ambiente y Pronóstico APIMeteo)</h3>
+        <span class="text-[11px] ag-muted">Escala única 0°C – 50°C</span>
+      </div>
+      <div id="termoChartContainer" class="ag-subpanel p-2"></div>
+    </div>
+  </section>
+
+  <!-- Direct Sector Controls -->
+  <section class="ag-card">
+    <div class="flex flex-wrap justify-between items-center gap-2 mb-3">
+      <h2 class="m-0 text-base font-bold">Controles Directos del Sector ({{ sector.idSector }})</h2>
+      {% if not snapshot.usuario %}
+        <a href="/" class="btn btn-sm btn-secondary">Iniciar sesión en Tablero General para operar controles RBAC</a>
+      {% endif %}
+    </div>
+    {% if snapshot.usuario %}
+    <div class="flex flex-wrap gap-2 items-center">
+      <button class="btn btn-sm" onclick="ejecutarTickSector()">Avanzar Tick (+5 min)</button>
+      <button class="btn btn-amber btn-sm" onclick="lanzarEscenarioSector('sequia_emergencia')">Sequía Extrema (&lt;15%)</button>
+      <button class="btn btn-blue btn-sm" onclick="lanzarEscenarioSector('lluvia_posponer')">Lluvia &gt;70%</button>
+      <button class="btn btn-red btn-sm" onclick="lanzarEscenarioSector('helada')">Helada (&le;2°C)</button>
+      <button class="btn btn-red btn-sm" onclick="lanzarEscenarioSector('riesgo_fungico')">Riesgo Fúngico</button>
+      <button class="btn btn-amber btn-sm" onclick="lanzarEscenarioSector('estres_termico')">Estrés Térmico (&ge;35°C)</button>
+      <button class="btn btn-red btn-sm" onclick="lanzarEscenarioSector('fallo_valvula')">Fallo Válvula</button>
+      <button class="btn btn-secondary btn-sm" onclick="lanzarEscenarioSector('avanzar_timeout_45min')">Forzar Timeout 45m</button>
+      <button class="btn btn-sm" onclick="lanzarEscenarioSector('normalizar')">Normalizar</button>
+      {% if snapshot.usuario.rol in ['GESTOR_SENSORES', 'ADMINISTRADOR'] and sector.sensor %}
+        <button id="detToggleSensorBtn" class="btn btn-secondary btn-sm" onclick="toggleNodoSector('{{ sector.sensor.idNodo }}', this.dataset.next === 'true')" data-next="{{ 'false' if sector.sensor.estadoOperativo == 'ACTIVO' else 'true' }}">
+          {{ 'Apagar Sensor' if sector.sensor.estadoOperativo == 'ACTIVO' else 'Encender Sensor' }}
+        </button>
+      {% endif %}
+      {% if snapshot.usuario.rol in ['TECNICO_AGRICOLA', 'ADMINISTRADOR'] %}
+        <button id="detResetValvBtn" class="btn btn-amber btn-sm" style="display:{{ 'inline-flex' if sector.estadoActual == 'ERROR_VALVULA' else 'none' }}" onclick="restablecerSectorActual()">Restablecer Válvula</button>
+      {% endif %}
+    </div>
+    {% if snapshot.usuario.rol in ['TECNICO_AGRICOLA', 'ADMINISTRADOR'] %}
+    <div class="flex flex-wrap gap-2 items-center mt-3 pt-3 border-t border-white/10">
+      <span class="text-xs ag-muted">Umbrales (%):</span>
+      <label class="text-xs ag-muted">Crítico <input type="number" step="0.5" id="detCrit" value="{{ sector.umbralCritico }}" style="width:72px" /></label>
+      <label class="text-xs ag-muted">Mínimo <input type="number" step="0.5" id="detMin" value="{{ sector.umbralMinimo }}" style="width:72px" /></label>
+      <label class="text-xs ag-muted">Objetivo <input type="number" step="0.5" id="detObj" value="{{ sector.umbralObjetivo }}" style="width:72px" /></label>
+      <button class="btn btn-blue btn-sm" onclick="guardarUmbralesActual()">Guardar Umbrales</button>
+    </div>
+    {% endif %}
+    {% endif %}
+  </section>
+
+  <!-- Detailed Chronological Readings Table -->
+  <section class="ag-card">
+    <h2 class="m-0 mb-3 text-base font-bold">Registro Cronológico de Lecturas ({{ sector.idSector }} — Últimas 30 Muestras)</h2>
+    <div class="overflow-x-auto">
+      <table>
+        <thead>
+          <tr>
+            <th>Timestamp</th>
+            <th>Humedad Suelo</th>
+            <th>&Delta; Humedad</th>
+            <th>Temp. Suelo</th>
+            <th>Temp. Ambiente</th>
+            <th>HR Ambiente</th>
+          </tr>
+        </thead>
+        <tbody id="tbodyLecturas"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Sector Alerts & Cycles -->
+  <section class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+    <div class="ag-card">
+      <h3 class="m-0 mb-3 text-sm font-bold">Alertas de {{ sector.idSector }}</h3>
+      <table>
+        <thead><tr><th>Tipo</th><th>Severidad</th><th>Mensaje</th><th>Estado</th></tr></thead>
+        <tbody id="tbodyAlertasSector"></tbody>
+      </table>
+    </div>
+    <div class="ag-card">
+      <h3 class="m-0 mb-3 text-sm font-bold">Ciclos de Riego de {{ sector.idSector }}</h3>
+      <table>
+        <thead><tr><th>Ciclo</th><th>Estado</th><th>Lámina</th><th>Humedad</th><th>Motivo</th></tr></thead>
+        <tbody id="tbodyCiclosSector"></tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<div id="toast" class="toast"></div>
+
+<script>
+const SECTOR_ID = {{ sector.idSector|tojson }};
+let SECTOR_ACTUAL = {{ sector|tojson }};
+let ALERTAS_ACTUALES = {{ alertas_sector|tojson }};
+let CICLOS_ACTUALES = {{ ciclos_sector|tojson }};
+const USUARIO_ACTUAL = {{ snapshot.usuario|tojson }};
+
+function aplicarTemaInicial() {
+  const guardado = localStorage.getItem('agritech-theme');
+  const html = document.documentElement;
+  if (guardado === 'light') html.classList.remove('dark');
+  else html.classList.add('dark');
+  const btn = document.getElementById('btnTema');
+  if (btn) btn.textContent = html.classList.contains('dark') ? 'Modo Claro' : 'Modo Oscuro';
+}
+
+function alternarTema() {
+  const html = document.documentElement;
+  html.classList.toggle('dark');
+  localStorage.setItem('agritech-theme', html.classList.contains('dark') ? 'dark' : 'light');
+  const btn = document.getElementById('btnTema');
+  if (btn) btn.textContent = html.classList.contains('dark') ? 'Modo Claro' : 'Modo Oscuro';
+}
+
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.style.display = 'block';
+  setTimeout(() => { el.style.display = 'none'; }, 1700);
+}
+
+function escapeHtml(txt) {
+  return String(txt || '')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function crearGridYAxesSvg(w, h, padL, padR, padT, padB, leftTicks, rightTicks, timestamps) {
+  const plotW = w - padL - padR;
+  const plotH = h - padT - padB;
+  let grid = '';
+  leftTicks.forEach(t => {
+    const y = padT + plotH - t.ratio * plotH;
+    grid += `<line x1="${padL}" y1="${y.toFixed(1)}" x2="${w - padR}" y2="${y.toFixed(1)}" stroke="#334155" stroke-width="0.8" opacity="0.45" />`;
+    grid += `<text x="${padL - 6}" y="${(y + 3).toFixed(1)}" text-anchor="end" fill="#94a3b8" font-size="10">${t.label}</text>`;
+  });
+  if (rightTicks) {
+    rightTicks.forEach(t => {
+      const y = padT + plotH - t.ratio * plotH;
+      grid += `<text x="${w - padR + 6}" y="${(y + 3).toFixed(1)}" text-anchor="start" fill="#fb923c" font-size="10">${t.label}</text>`;
+    });
+  }
+  const n = timestamps.length;
+  const step = Math.max(1, Math.ceil(n / 8));
+  timestamps.forEach((ts, i) => {
+    if (i % step === 0 || i === n - 1) {
+      const x = n > 1 ? padL + (i * plotW / (n - 1)) : padL + plotW / 2;
+      grid += `<line x1="${x.toFixed(1)}" y1="${padT}" x2="${x.toFixed(1)}" y2="${(padT + plotH).toFixed(1)}" stroke="#334155" stroke-width="0.6" opacity="0.3" />`;
+      grid += `<text x="${x.toFixed(1)}" y="${h - 8}" text-anchor="middle" fill="#94a3b8" font-size="10">${escapeHtml(ts)}</text>`;
+    }
+  });
+  grid += `<rect x="${padL}" y="${padT}" width="${plotW}" height="${plotH}" fill="none" stroke="#475569" stroke-width="1" />`;
+  return grid;
+}
+
+function buildPolyline(values, xAt, yMap) {
+  return values.map((v, i) => `${xAt(i, values.length).toFixed(1)},${yMap(v).toFixed(1)}`).join(' ');
+}
+
+function renderMainDetailChart(sector) {
+  const host = document.getElementById('mainChartSvgHost');
+  const tooltip = document.getElementById('chartTooltip');
+  if (!host) return;
+
+  const lecturas = sector.lecturasDetalladas || [];
+  if (lecturas.length === 0) {
+    host.innerHTML = '<div class="p-8 text-center text-sm ag-muted">Esperando telemetría del sector...</div>';
+    return;
+  }
+
+  const showHum = document.getElementById('chkHumSuelo')?.checked ?? true;
+  const showTemp = document.getElementById('chkTempSuelo')?.checked ?? true;
+  const showHR = document.getElementById('chkHumRel')?.checked ?? true;
+  const showUmb = document.getElementById('chkUmbrales')?.checked ?? true;
+
+  const hum = lecturas.map(l => l.humedadSuelo);
+  const tSuelo = lecturas.map(l => l.temperaturaSuelo);
+  const hRel = lecturas.map(l => l.humedadRelativa);
+  const times = lecturas.map(l => l.hora);
+
+  const w = 880, h = 370, padL = 52, padR = 54, padT = 20, padB = 34;
+  const plotW = w - padL - padR;
+  const plotH = h - padT - padB;
+  const xAt = (i, len) => len > 1 ? padL + (i * plotW / (len - 1)) : padL + plotW / 2;
+  const yPct = (v) => padT + plotH - (Math.max(0, Math.min(100, v)) / 100) * plotH;
+  const yTmp = (v) => padT + plotH - (Math.max(0, Math.min(50, v)) / 50) * plotH;
+
+  const leftTicks = [0, 20, 40, 60, 80, 100].map(v => ({ ratio: v / 100, label: v + '%' }));
+  const rightTicks = [0, 10, 20, 30, 40, 50].map(v => ({ ratio: v / 50, label: v + '°C' }));
+
+  let svgContent = `
+    <defs>
+      <linearGradient id="gradMainHum" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.34" />
+        <stop offset="100%" stop-color="#38bdf8" stop-opacity="0.02" />
+      </linearGradient>
+    </defs>
+  `;
+
+  if (showUmb) {
+    const yCrit = yPct(sector.umbralCritico);
+    const yMin = yPct(sector.umbralMinimo);
+    const yObj = yPct(sector.umbralObjetivo);
+    const yBottom = padT + plotH;
+    svgContent += `
+      <rect x="${padL}" y="${yCrit.toFixed(1)}" width="${plotW}" height="${(yBottom - yCrit).toFixed(1)}" fill="#ef4444" opacity="0.08" />
+      <rect x="${padL}" y="${yMin.toFixed(1)}" width="${plotW}" height="${Math.max(0, yCrit - yMin).toFixed(1)}" fill="#f59e0b" opacity="0.07" />
+      <rect x="${padL}" y="${yObj.toFixed(1)}" width="${plotW}" height="${Math.max(0, yMin - yObj).toFixed(1)}" fill="#22c55e" opacity="0.07" />
+    `;
+  }
+
+  svgContent += crearGridYAxesSvg(w, h, padL, padR, padT, padB, leftTicks, rightTicks, times);
+
+  if (showUmb) {
+    const umbrales = [
+      { v: sector.umbralObjetivo, c: '#22c55e', lbl: `Objetivo ${sector.umbralObjetivo}%` },
+      { v: sector.umbralMinimo, c: '#f59e0b', lbl: `Mínimo ${sector.umbralMinimo}%` },
+      { v: sector.umbralCritico, c: '#ef4444', lbl: `Crítico ${sector.umbralCritico}%` },
+    ];
+    umbrales.forEach(u => {
+      const y = yPct(u.v);
+      svgContent += `
+        <line x1="${padL}" y1="${y.toFixed(1)}" x2="${w - padR}" y2="${y.toFixed(1)}" stroke="${u.c}" stroke-width="1.4" stroke-dasharray="6,4" />
+        <rect x="${padL + 6}" y="${(y - 14).toFixed(1)}" width="92" height="14" rx="4" fill="#0f172a" opacity="0.88" stroke="${u.c}" stroke-width="0.8" />
+        <text x="${padL + 11}" y="${(y - 4).toFixed(1)}" fill="${u.c}" font-size="9.5" font-weight="bold">${u.lbl}</text>
+      `;
+    });
+  }
+
+  if (showHR) {
+    svgContent += `<polyline fill="none" stroke="#c084fc" stroke-width="1.8" stroke-dasharray="4,3" points="${buildPolyline(hRel, xAt, yPct)}" />`;
+    hRel.forEach((v, i) => {
+      svgContent += `<circle cx="${xAt(i, hRel.length).toFixed(1)}" cy="${yPct(v).toFixed(1)}" r="2.2" fill="#c084fc" />`;
+    });
+  }
+
+  if (showTemp) {
+    svgContent += `<polyline fill="none" stroke="#fb923c" stroke-width="2.2" points="${buildPolyline(tSuelo, xAt, yTmp)}" />`;
+    tSuelo.forEach((v, i) => {
+      svgContent += `<circle cx="${xAt(i, tSuelo.length).toFixed(1)}" cy="${yTmp(v).toFixed(1)}" r="2.6" fill="#fb923c" />`;
+    });
+  }
+
+  if (showHum) {
+    const humPts = hum.map((v, i) => [xAt(i, hum.length), yPct(v)]);
+    const areaPts = [
+      `${humPts[0][0].toFixed(1)},${(padT + plotH).toFixed(1)}`,
+      ...humPts.map(p => `${p[0].toFixed(1)},${p[1].toFixed(1)}`),
+      `${humPts[humPts.length - 1][0].toFixed(1)},${(padT + plotH).toFixed(1)}`
+    ].join(' ');
+    svgContent += `<polygon fill="url(#gradMainHum)" points="${areaPts}" />`;
+    svgContent += `<polyline fill="none" stroke="#38bdf8" stroke-width="2.8" points="${humPts.map(p => `${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' ')}" />`;
+    humPts.forEach((p, i) => {
+      const isLast = i === humPts.length - 1;
+      svgContent += `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="${isLast ? 4.5 : 2.8}" fill="#38bdf8" ${isLast ? 'stroke="#fff" stroke-width="1.5"' : ''} />`;
+    });
+  }
+
+  svgContent += `<line id="mainCrosshair" x1="0" y1="${padT}" x2="0" y2="${(padT + plotH).toFixed(1)}" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="3,3" style="display:none;" />`;
+
+  // Hover hitboxes per sample index
+  const colW = lecturas.length > 1 ? plotW / (lecturas.length - 1) : plotW;
+  lecturas.forEach((_, i) => {
+    const cx = xAt(i, lecturas.length);
+    const rx = Math.max(padL, cx - colW / 2);
+    svgContent += `<rect class="chart-hitbox" data-idx="${i}" x="${rx.toFixed(1)}" y="${padT}" width="${colW.toFixed(1)}" height="${plotH}" fill="transparent" style="cursor:crosshair;" />`;
+  });
+
+  host.innerHTML = `<svg viewBox="0 0 ${w} ${h}" class="w-full h-auto block">${svgContent}</svg>`;
+
+  host.querySelectorAll('.chart-hitbox').forEach(rect => {
+    rect.addEventListener('mouseenter', (ev) => {
+      const idx = parseInt(ev.target.dataset.idx, 10);
+      const item = lecturas[idx];
+      if (!item) return;
+      const cx = xAt(idx, lecturas.length);
+      const ch = document.getElementById('mainCrosshair');
+      if (ch) {
+        ch.setAttribute('x1', cx.toFixed(1));
+        ch.setAttribute('x2', cx.toFixed(1));
+        ch.style.display = 'block';
+      }
+      if (tooltip) {
+        tooltip.innerHTML = `
+          <div class="font-bold text-emerald-300 mb-1">${escapeHtml(item.timestamp)}</div>
+          <div>Humedad Suelo: <strong class="text-sky-300">${item.humedadSuelo}%</strong></div>
+          <div>Temp. Suelo: <strong class="text-orange-300">${item.temperaturaSuelo}°C</strong></div>
+          <div>Temp. Ambiente: <strong class="text-yellow-300">${item.temperaturaAmbiente}°C</strong></div>
+          <div>HR Ambiente: <strong class="text-violet-300">${item.humedadRelativa}%</strong></div>
+        `;
+        const pctLeft = Math.min(72, Math.max(4, (cx / w) * 100));
+        tooltip.style.left = pctLeft + '%';
+        tooltip.style.top = '12px';
+        tooltip.classList.remove('hidden');
+      }
+    });
+  });
+  host.addEventListener('mouseleave', () => {
+    const ch = document.getElementById('mainCrosshair');
+    if (ch) ch.style.display = 'none';
+    if (tooltip) tooltip.classList.add('hidden');
+  });
+}
+
+function renderSubCharts(sector) {
+  const lecturas = sector.lecturasDetalladas || [];
+  const hidroHost = document.getElementById('hidroChartContainer');
+  const termoHost = document.getElementById('termoChartContainer');
+  if (!hidroHost || !termoHost) return;
+
+  if (lecturas.length === 0) {
+    hidroHost.innerHTML = '<div class="p-4 text-xs ag-muted">Sin lecturas de hidrometría.</div>';
+    termoHost.innerHTML = '<div class="p-4 text-xs ag-muted">Sin lecturas de termometría.</div>';
+    return;
+  }
+
+  const w = 540, h = 220, padL = 44, padR = 46, padT = 16, padB = 28;
+  const plotW = w - padL - padR;
+  const plotH = h - padT - padB;
+  const times = lecturas.map(l => l.hora);
+  const xAt = (i, len) => len > 1 ? padL + (i * plotW / (len - 1)) : padL + plotW / 2;
+
+  // Gráfica 1: Hidrometría Exclusiva
+  const hum = lecturas.map(l => l.humedadSuelo);
+  const yPct = (v) => padT + plotH - (Math.max(0, Math.min(100, v)) / 100) * plotH;
+  const leftHidro = [0, 25, 50, 75, 100].map(v => ({ ratio: v / 100, label: v + '%' }));
+  let hSvg = crearGridYAxesSvg(w, h, padL, padR, padT, padB, leftHidro, null, times);
+  [
+    { v: sector.umbralObjetivo, c: '#22c55e', lbl: 'Obj ' + sector.umbralObjetivo + '%' },
+    { v: sector.umbralMinimo, c: '#f59e0b', lbl: 'Mín ' + sector.umbralMinimo + '%' },
+    { v: sector.umbralCritico, c: '#ef4444', lbl: 'Crít ' + sector.umbralCritico + '%' },
+  ].forEach(u => {
+    const y = yPct(u.v);
+    hSvg += `<line x1="${padL}" y1="${y.toFixed(1)}" x2="${w - padR}" y2="${y.toFixed(1)}" stroke="${u.c}" stroke-width="1.2" stroke-dasharray="4,3" />`;
+    hSvg += `<text x="${w - padR + 4}" y="${(y + 3).toFixed(1)}" fill="${u.c}" font-size="9">${u.lbl}</text>`;
+  });
+  hSvg += `<polyline fill="none" stroke="#38bdf8" stroke-width="2.4" points="${buildPolyline(hum, xAt, yPct)}" />`;
+  hum.forEach((v, i) => {
+    hSvg += `<circle cx="${xAt(i, hum.length).toFixed(1)}" cy="${yPct(v).toFixed(1)}" r="2.6" fill="#38bdf8" />`;
+  });
+  hidroHost.innerHTML = `<svg viewBox="0 0 ${w} ${h}" class="w-full h-auto block">${hSvg}</svg>`;
+
+  // Gráfica 2: Termometría Exclusiva
+  const tSuelo = lecturas.map(l => l.temperaturaSuelo);
+  const tAmb = lecturas.map(l => l.temperaturaAmbiente);
+  const tMin = sector.pronostico ? sector.pronostico.tempMinimaEsperada : 8.0;
+  const yTmp = (v) => padT + plotH - (Math.max(0, Math.min(50, v)) / 50) * plotH;
+  const leftTermo = [0, 10, 20, 30, 40, 50].map(v => ({ ratio: v / 50, label: v + '°C' }));
+  let tSvg = crearGridYAxesSvg(w, h, padL, padR, padT, padB, leftTermo, null, times);
+  [
+    { v: 35, c: '#ef4444', lbl: 'Estrés 35°C' },
+    { v: tMin, c: '#38bdf8', lbl: 'T_mín ' + tMin + '°C' },
+    { v: 2, c: '#60a5fa', lbl: 'Helada 2°C' },
+  ].forEach(u => {
+    const y = yTmp(u.v);
+    tSvg += `<line x1="${padL}" y1="${y.toFixed(1)}" x2="${w - padR}" y2="${y.toFixed(1)}" stroke="${u.c}" stroke-width="1.1" stroke-dasharray="4,3" />`;
+    tSvg += `<text x="${w - padR + 4}" y="${(y + 3).toFixed(1)}" fill="${u.c}" font-size="8.5">${u.lbl}</text>`;
+  });
+  tSvg += `<polyline fill="none" stroke="#facc15" stroke-width="1.8" stroke-dasharray="4,3" points="${buildPolyline(tAmb, xAt, yTmp)}" />`;
+  tSvg += `<polyline fill="none" stroke="#fb923c" stroke-width="2.4" points="${buildPolyline(tSuelo, xAt, yTmp)}" />`;
+  tSuelo.forEach((v, i) => {
+    tSvg += `<circle cx="${xAt(i, tSuelo.length).toFixed(1)}" cy="${yTmp(v).toFixed(1)}" r="2.6" fill="#fb923c" />`;
+  });
+  termoHost.innerHTML = `
+    <div class="flex gap-4 text-[11px] ag-muted px-2 pb-1">
+      <span><span class="text-orange-400 font-bold">&mdash;</span> Temp. Suelo (°C)</span>
+      <span><span class="text-yellow-400 font-bold">- -</span> Temp. Ambiente (°C)</span>
+      <span><span class="text-sky-400 font-bold">- -</span> T_mín APIMeteo</span>
+    </div>
+    <svg viewBox="0 0 ${w} ${h}" class="w-full h-auto block">${tSvg}</svg>
+  `;
+}
+
+function renderTablasDetalle(sector, alertas, ciclos) {
+  const tbLect = document.getElementById('tbodyLecturas');
+  const lecturas = (sector.lecturasDetalladas || []).slice().reverse();
+  if (tbLect) {
+    if (lecturas.length === 0) {
+      tbLect.innerHTML = '<tr><td colspan="6" class="ag-muted">Sin lecturas registradas.</td></tr>';
+    } else {
+      tbLect.innerHTML = lecturas.map((l, idx) => {
+        const prev = lecturas[idx + 1];
+        const delta = prev ? (l.humedadSuelo - prev.humedadSuelo) : 0;
+        const deltaStr = prev ? ((delta >= 0 ? '+' : '') + delta.toFixed(1) + '%') : '--';
+        const deltaCls = delta > 0 ? 'text-sky-400' : (delta < 0 ? 'text-amber-400' : 'ag-muted');
+        return `
+          <tr>
+            <td><code>${escapeHtml(l.timestamp)}</code></td>
+            <td><strong class="text-sky-400">${l.humedadSuelo}%</strong></td>
+            <td class="${deltaCls} font-semibold">${deltaStr}</td>
+            <td class="text-orange-400 font-semibold">${l.temperaturaSuelo}°C</td>
+            <td class="text-yellow-400">${l.temperaturaAmbiente}°C</td>
+            <td class="text-violet-400">${l.humedadRelativa}%</td>
+          </tr>
+        `;
+      }).join('');
+    }
+  }
+
+  const puedeReconocer = USUARIO_ACTUAL && (USUARIO_ACTUAL.rol === 'TECNICO_AGRICOLA' || USUARIO_ACTUAL.rol === 'ADMINISTRADOR');
+  const tbAl = document.getElementById('tbodyAlertasSector');
+  if (tbAl) {
+    tbAl.innerHTML = alertas.length === 0
+      ? '<tr><td colspan="4" class="ag-muted">Sin alertas registradas en este sector.</td></tr>'
+      : alertas.map(a => `
+        <tr>
+          <td><strong>${escapeHtml(a.tipoAlerta)}</strong></td>
+          <td><span class="badge badge-${escapeHtml(a.nivelSeveridad)}">${escapeHtml(a.nivelSeveridad)}</span></td>
+          <td>${escapeHtml(a.mensaje)}<br/><small class="ag-muted">${escapeHtml(a.timestamp)}</small></td>
+          <td>${a.reconocida ? 'Reconocida' : (puedeReconocer ? `<button class="btn btn-sm btn-secondary" onclick="reconocerAlertaSector('${escapeHtml(a.idAlerta)}')">Reconocer</button>` : 'Activa')}</td>
+        </tr>
+      `).join('');
+  }
+
+  const tbCic = document.getElementById('tbodyCiclosSector');
+  if (tbCic) {
+    tbCic.innerHTML = ciclos.length === 0
+      ? '<tr><td colspan="5" class="ag-muted">Sin ciclos de riego registrados en este sector.</td></tr>'
+      : ciclos.map(c => `
+        <tr>
+          <td><code>${escapeHtml(c.idCiclo)}</code></td>
+          <td><strong>${escapeHtml(c.estado)}</strong></td>
+          <td>${escapeHtml(c.laminaMm)} mm</td>
+          <td>${escapeHtml(c.humedadInicial)}% &rarr; ${c.humedadFinal !== null && c.humedadFinal !== undefined ? escapeHtml(c.humedadFinal) : '--'}%</td>
+          <td>${escapeHtml(c.motivoCierre)}</td>
+        </tr>
+      `).join('');
+  }
+}
+
+function renderTodoDetalle(payload) {
+  const s = payload.sector;
+  SECTOR_ACTUAL = s;
+  ALERTAS_ACTUALES = payload.alertas || [];
+  CICLOS_ACTUALES = payload.ciclos || [];
+
+  const reloj = document.getElementById('relojBadge');
+  if (reloj && payload.relojSimulado) reloj.textContent = 'Reloj Simulado: ' + payload.relojSimulado;
+
+  const badge = document.getElementById('detBadge');
+  if (badge) {
+    badge.textContent = s.estadoActual;
+    badge.className = 'badge badge-' + s.estadoActual;
+  }
+
+  const lec = s.ultimaLectura;
+  const el = (id) => document.getElementById(id);
+  if (el('kpiHum')) el('kpiHum').textContent = (lec ? lec.humedadSuelo : '--') + '%';
+  if (el('kpiTempSuelo')) el('kpiTempSuelo').textContent = (lec ? lec.temperaturaSuelo : '--') + '°C';
+  if (el('kpiTempAmb')) el('kpiTempAmb').textContent = (lec ? lec.temperaturaAmbiente : '--') + '°C';
+  if (el('kpiHR')) el('kpiHR').textContent = (lec ? lec.humedadRelativa : '--') + '%';
+  if (el('kpiUmbrales')) el('kpiUmbrales').textContent = `Obj: ${s.umbralObjetivo}% · Mín: ${s.umbralMinimo}%`;
+  if (el('kpiLluvia') && s.pronostico) el('kpiLluvia').textContent = s.pronostico.probabilidadLluvia + '%';
+  if (el('kpiFuenteLluvia') && s.pronostico) el('kpiFuenteLluvia').textContent = s.pronostico.obtenidoDesdeCache ? 'Caché 3h' : 'APIMeteo Live';
+  if (el('kpiTMin') && s.pronostico) el('kpiTMin').textContent = `T_mín APIMeteo: ${s.pronostico.tempMinimaEsperada}°C`;
+  if (el('kpiValvula')) el('kpiValvula').textContent = s.valvulaAbierta ? 'VÁLVULA ABIERTA' : 'VÁLVULA CERRADA';
+  if (el('kpiSensor') && s.sensor) el('kpiSensor').textContent = `${s.sensor.idNodo} · ${s.sensor.estadoOperativo}`;
+
+  const tBtn = el('detToggleSensorBtn');
+  if (tBtn && s.sensor) {
+    const activo = s.sensor.estadoOperativo === 'ACTIVO';
+    tBtn.textContent = activo ? 'Apagar Sensor' : 'Encender Sensor';
+    tBtn.dataset.next = activo ? 'false' : 'true';
+  }
+  const rBtn = el('detResetValvBtn');
+  if (rBtn) rBtn.style.display = s.estadoActual === 'ERROR_VALVULA' ? 'inline-flex' : 'none';
+
+  renderMainDetailChart(s);
+  renderSubCharts(s);
+  renderTablasDetalle(s, ALERTAS_ACTUALES, CICLOS_ACTUALES);
+  if (typeof window.actualizarGemelo3D === 'function') {
+    window.actualizarGemelo3D(s);
+  }
+}
+
+async function actualizarDetalleEnVivo() {
+  try {
+    const res = await fetch('/api/sectores/' + encodeURIComponent(SECTOR_ID) + '/historial', { cache: 'no-store' });
+    if (res.ok) {
+      const payload = await res.json();
+      renderTodoDetalle(payload);
+    }
+  } catch (e) {
+    // Reintento silencioso
+  }
+}
+
+async function apiJsonDetalle(url, method, body) {
+  const res = await fetch(url, {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+    body: body ? JSON.stringify(body) : undefined
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    alert('Error HTTP ' + res.status + ': ' + (data.error || 'Operación rechazada'));
+    return null;
+  }
+  return data;
+}
+
+async function ejecutarTickSector() {
+  const res = await apiJsonDetalle('/api/simulador/tick', 'POST', {});
+  if (res) {
+    await actualizarDetalleEnVivo();
+    showToast('Tick de simulación aplicado');
+  }
+}
+
+async function lanzarEscenarioSector(escenario) {
+  const res = await apiJsonDetalle('/api/simulador/escenario', 'POST', { idSector: SECTOR_ID, escenario });
+  if (res) {
+    await actualizarDetalleEnVivo();
+    showToast('Escenario "' + escenario + '" aplicado en ' + SECTOR_ID);
+  }
+}
+
+async function toggleNodoSector(idNodo, encendido) {
+  const res = await apiJsonDetalle('/api/nodos/' + idNodo + '/estado', 'PUT', { encendido });
+  if (res) {
+    await actualizarDetalleEnVivo();
+    showToast('Nodo ' + idNodo + ' -> ' + res.estadoOperativo);
+  }
+}
+
+async function guardarUmbralesActual() {
+  const umbralCritico = parseFloat(document.getElementById('detCrit').value);
+  const umbralMinimo = parseFloat(document.getElementById('detMin').value);
+  const umbralObjetivo = parseFloat(document.getElementById('detObj').value);
+  const res = await apiJsonDetalle('/api/sectores/' + SECTOR_ID + '/umbrales', 'PUT', {
+    umbralCritico, umbralMinimo, umbralObjetivo
+  });
+  if (res) {
+    await actualizarDetalleEnVivo();
+    showToast('Umbrales actualizados para ' + SECTOR_ID);
+  }
+}
+
+async function restablecerSectorActual() {
+  const res = await apiJsonDetalle('/api/sectores/' + SECTOR_ID + '/restablecer', 'POST', {});
+  if (res) {
+    await actualizarDetalleEnVivo();
+    showToast('Sector restablecido a ' + res.estadoActual);
+  }
+}
+
+async function reconocerAlertaSector(idAlerta) {
+  const res = await apiJsonDetalle('/api/alertas/' + idAlerta + '/reconocer', 'POST', {});
+  if (res) {
+    await actualizarDetalleEnVivo();
+    showToast('Alerta ' + idAlerta + ' reconocida');
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  aplicarTemaInicial();
+  renderTodoDetalle({
+    relojSimulado: {{ snapshot.relojSimulado|tojson }},
+    sector: SECTOR_ACTUAL,
+    alertas: ALERTAS_ACTUALES,
+    ciclos: CICLOS_ACTUALES,
+  });
+  setInterval(actualizarDetalleEnVivo, 2500);
+});
+</script>
+
+<!-- Three.js r186 3D Animated Digital Twin (/threejs-animation skill) -->
+<script type="module">
+const mount = document.getElementById('threeTwinMount');
+const statusLabel = document.getElementById('twinStatusLabel');
+
+async function iniciarGemelo3D() {
+  if (!mount) return;
+  try {
+    const THREE = await import('three');
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setSize(mount.clientWidth || 380, mount.clientHeight || 300);
+    mount.innerHTML = '';
+    mount.appendChild(renderer.domElement);
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(
+      45,
+      (mount.clientWidth || 380) / (mount.clientHeight || 300),
+      0.1,
+      100
+    );
+    camera.position.set(4.2, 3.3, 4.6);
+    camera.lookAt(0, 0.3, 0);
+
+    const ambient = new THREE.HemisphereLight(0xdbeafe, 0x0f172a, 1.3);
+    const sun = new THREE.DirectionalLight(0xffffff, 2.0);
+    sun.position.set(4, 7, 3);
+    scene.add(ambient, sun);
+
+    const sceneRoot = new THREE.Group();
+    scene.add(sceneRoot);
+
+    // Lecho de suelo y nivel freático dinámico
+    const soilMat = new THREE.MeshStandardMaterial({ color: 0x5c4033, roughness: 0.9 });
+    const soilMesh = new THREE.Mesh(new THREE.BoxGeometry(3.4, 0.55, 2.6), soilMat);
+    soilMesh.position.set(0, -0.2, 0);
+    sceneRoot.add(soilMesh);
+
+    const waterMat = new THREE.MeshStandardMaterial({
+      color: 0x38bdf8, transparent: true, opacity: 0.45, roughness: 0.2
+    });
+    const waterMesh = new THREE.Mesh(new THREE.BoxGeometry(3.32, 0.4, 2.52), waterMat);
+    waterMesh.position.set(0, -0.35, 0);
+    sceneRoot.add(waterMesh);
+
+    // Surcos de cultivo
+    const cropsGroup = new THREE.Group();
+    cropsGroup.name = 'Crops';
+    const plantMat = new THREE.MeshStandardMaterial({ color: 0x22c55e, roughness: 0.65 });
+    for (let x = -1.1; x <= 1.15; x += 0.55) {
+      for (let z = -0.8; z <= 0.85; z += 0.55) {
+        const plant = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.45, 7), plantMat);
+        plant.position.set(x, 0.28, z);
+        cropsGroup.add(plant);
+      }
+    }
+    sceneRoot.add(cropsGroup);
+
+    // Torre del NodoSensorIoT + Baliza animada con KeyframeTracks
+    const pole = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.05, 0.06, 1.15, 10),
+      new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.5, roughness: 0.4 })
+    );
+    pole.position.set(-1.35, 0.55, -0.95);
+    sceneRoot.add(pole);
+
+    const beaconMat = new THREE.MeshStandardMaterial({
+      color: 0x22c55e, emissive: 0x16a34a, emissiveIntensity: 0.8
+    });
+    const beacon = new THREE.Mesh(new THREE.SphereGeometry(0.14, 16, 16), beaconMat);
+    beacon.name = 'SensorBeacon';
+    beacon.position.set(-1.35, 1.2, -0.95);
+    sceneRoot.add(beacon);
+
+    // Actuador ServidorValvulas + Gotas de riego animadas por AnimationMixer
+    const valveGroup = new THREE.Group();
+    valveGroup.name = 'ValveActuator';
+    valveGroup.position.set(1.25, 0.85, -0.85);
+    const valveWheel = new THREE.Mesh(
+      new THREE.TorusGeometry(0.22, 0.05, 10, 20),
+      new THREE.MeshStandardMaterial({ color: 0x38bdf8, metalness: 0.4, roughness: 0.35 })
+    );
+    valveWheel.rotation.x = Math.PI / 2;
+    valveGroup.add(valveWheel);
+    sceneRoot.add(valveGroup);
+
+    const dropletsGroup = new THREE.Group();
+    dropletsGroup.name = 'WaterDroplets';
+    const dropMat = new THREE.MeshStandardMaterial({ color: 0x7dd3fc, transparent: true, opacity: 0.88 });
+    for (let i = 0; i < 12; i++) {
+      const drop = new THREE.Mesh(new THREE.SphereGeometry(0.045, 8, 8), dropMat);
+      drop.position.set(((i % 4) - 1.5) * 0.65, 0.25 + Math.floor(i / 4) * 0.28, (Math.floor(i / 4) - 1) * 0.55);
+      dropletsGroup.add(drop);
+    }
+    dropletsGroup.visible = false;
+    sceneRoot.add(dropletsGroup);
+
+    // AnimationMixer + KeyframeTracks (/threejs-animation)
+    const mixer = new THREE.AnimationMixer(sceneRoot);
+    const beaconPulseTrack = new THREE.VectorKeyframeTrack(
+      'SensorBeacon.scale',
+      [0, 0.75, 1.5],
+      [1, 1, 1, 1.28, 1.28, 1.28, 1, 1, 1]
+    );
+    const dropletsFallTrack = new THREE.NumberKeyframeTrack(
+      'WaterDroplets.position[y]',
+      [0, 0.9],
+      [0.95, 0.05]
+    );
+    const beaconClip = new THREE.AnimationClip('beaconPulse', 1.5, [beaconPulseTrack]);
+    const irrigationClip = new THREE.AnimationClip('irrigationFlow', 0.9, [dropletsFallTrack]);
+
+    const beaconAction = mixer.clipAction(beaconClip);
+    beaconAction.play();
+    const irrigationAction = mixer.clipAction(irrigationClip);
+    irrigationAction.setLoop(THREE.LoopRepeat, Infinity);
+
+    let targetHumidityRatio = 0.45;
+    let currentHumidityRatio = 0.45;
+    let estaRegando = false;
+
+    window.actualizarGemelo3D = function(sector) {
+      if (!sector) return;
+      const humVal = sector.ultimaLectura ? sector.ultimaLectura.humedadSuelo : 40;
+      targetHumidityRatio = Math.max(0.05, Math.min(1.0, humVal / 100));
+      estaRegando = Boolean(sector.valvulaAbierta) || sector.estadoActual === 'REGANDO';
+
+      dropletsGroup.visible = estaRegando;
+      if (estaRegando) {
+        if (!irrigationAction.isRunning()) irrigationAction.reset().play();
+      } else {
+        irrigationAction.stop();
+      }
+
+      let colorHex = 0x22c55e;
+      if (sector.estadoActual === 'REGANDO') colorHex = 0x38bdf8;
+      else if (sector.estadoActual === 'RIEGO_POSPUESTO' || sector.estadoActual === 'REQUIERE_RIEGO') colorHex = 0xf59e0b;
+      else if (sector.estadoActual === 'ALERTA_FITOSANITARIA' || sector.estadoActual === 'ERROR_VALVULA') colorHex = 0xef4444;
+      beaconMat.color.setHex(colorHex);
+      beaconMat.emissive.setHex(colorHex);
+    };
+
+    window.actualizarGemelo3D(SECTOR_ACTUAL);
+    if (statusLabel) statusLabel.textContent = 'WebGL 3D Activo';
+
+    // THREE.Timer (/threejs-animation r186)
+    const timer = new THREE.Timer();
+    timer.connect(document);
+
+    const dryColor = new THREE.Color(0x855e42);
+    const wetColor = new THREE.Color(0x283618);
+
+    function animate() {
+      timer.update();
+      const delta = timer.getDelta();
+      const elapsed = timer.getElapsed();
+
+      mixer.update(delta);
+      currentHumidityRatio = THREE.MathUtils.damp(currentHumidityRatio, targetHumidityRatio, 3.5, delta);
+
+      soilMat.color.copy(dryColor).lerp(wetColor, currentHumidityRatio);
+      waterMesh.scale.y = Math.max(0.15, currentHumidityRatio * 1.4);
+      waterMesh.position.y = -0.45 + currentHumidityRatio * 0.25;
+      sceneRoot.rotation.y = Math.sin(elapsed * 0.25) * 0.35;
+      if (estaRegando) {
+        valveGroup.rotation.y += delta * 2.4;
+      }
+
+      renderer.render(scene, camera);
+    }
+
+    renderer.setAnimationLoop(animate);
+
+    window.addEventListener('resize', () => {
+      if (!mount.clientWidth || !mount.clientHeight) return;
+      camera.aspect = mount.clientWidth / mount.clientHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(mount.clientWidth, mount.clientHeight);
+    });
+  } catch (err) {
+    if (statusLabel) statusLabel.textContent = 'Fallback 2D (Sin WebGL/CDN)';
+    mount.innerHTML = '<div class="p-4 text-xs ag-muted text-center">Gemelo 3D Three.js listo en entorno con WebGL/acceso CDN. Usa las gráficas vectoriales interactivas a la izquierda para inspección en tiempo real.</div>';
+  }
+}
+
+iniciarGemelo3D();
+</script>
+</body>
+</html>
