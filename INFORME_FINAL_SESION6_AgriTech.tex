@@ -16,6 +16,7 @@
 \usepackage{tabularx}
 \usepackage{makecell}
 \usepackage{seqsplit}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
 \usepackage[table]{xcolor}
 \usepackage{amsmath,amssymb}
 \usepackage{enumitem}
@@ -75,6 +76,8 @@
 \lstset{
     backgroundcolor=\color{usaFondoCodigo},
     basicstyle=\ttfamily\footnotesize,
+    columns=fullflexible,
+    keepspaces=true,
     breaklines=true,
     frame=single,
     rulecolor=\color{usaBordeCodigo},
@@ -134,9 +137,9 @@
 % ==============================================================================
 % CAPÍTULO 1: INGENIERÍA DE REQUISITOS (ISO/IEC/IEEE 29148) Y GLOSARIO
 % ==============================================================================
-\chapter{Ingeniería de Requisitos (ISO/IEC/IEEE 29148) y Modelo de Dominio}
+\chapter[Ingeniería de Requisitos (ISO/IEC/IEEE 29148) y Modelo de Dominio]{Ingeniería de Requisitos\\ (ISO/IEC/IEEE 29148)\\ y Modelo de Dominio}
 
-\section{Propósito, Alcance y Coherencia Nominal (\texttt{domain-modeling})}
+\section{Propósito, Alcance y Coherencia Nominal del Dominio}
 El sistema \textbf{AgriTech Precision} automatiza el monitoreo agrometeorológico mediante telemetría IoT de humedad y temperatura del suelo, consulta asíncrona de pronóstico meteorológico externo (\texttt{APIMeteo}), accionamiento remoto de electroválvulas (\texttt{ServidorValvulas}) y generación de alertas fitosanitarias tempranas sobre cultivos en la Sabana de Bogotá.
 
 En estricto cumplimiento de la disciplina de modelado de dominio (\textit{Ubiquitous Language} formalizada en \texttt{agritech\_cloud\_app/GLOSSARY.md}), todo identificador de entidad, atributo, método, estado, excepción, puerto y adaptador conserva \textbf{coherencia nominal al 100\%} entre los requerimientos, los diagramas UML 2.5, el código fuente Python y la suite de pruebas automatizadas.
@@ -145,7 +148,7 @@ En estricto cumplimiento de la disciplina de modelado de dominio (\textit{Ubiqui
 \centering
 \caption{Glosario canónico del dominio \textbf{AgriTech Precision} (coherencia nominal 100\%).}
 \small
-\begin{tabularx}{\textwidth}{l l Y}
+\begin{tabularx}{\textwidth}{l L{3.6cm} Y}
 \toprule
 \textbf{Identificador Canónico} & \textbf{Estereotipo / Patrón} & \textbf{Responsabilidad e Invariantes} \\
 \midrule
@@ -153,12 +156,13 @@ En estricto cumplimiento de la disciplina de modelado de dominio (\textit{Ubiqui
 \texttt{ZonaCultivo} & Parte Compuesta & Subzona con \texttt{idZona}, \texttt{tipoCultivo}, \texttt{areaHectareas} y \texttt{etapaFenologica}. \\
 \texttt{SensorSuelo} & Parte Compuesta & Nodo IoT (\texttt{NODO-01..03}) con \texttt{tokenAutenticacion}, \texttt{estadoOperativo} y \texttt{validarTrama(h, t)}. \\
 \texttt{LecturaTelemetria} & Parte Compuesta (Inmutable) & Medición de \texttt{humedadSuelo}, \texttt{temperaturaSuelo}, \texttt{temperaturaAmbiente}, \texttt{humedadRelativa} y \texttt{timestamp}. \\
-\texttt{CicloRiego} & Entidad con FSM UML 2.5 & Controla estados \texttt{EVALUANDO}, \texttt{POSPUESTO}, \texttt{REGANDO} (compuesto), \texttt{FINALIZADO}, \texttt{ABORTADO\_TIMEOUT} (\texttt{MAX\_DURACION\_SEGUNDOS = 2700}) y \texttt{ERROR\_ACTUADOR}. \\
-\texttt{AlertaTemprana} & Parte Compuesta & Registra \texttt{HELADA}, \texttt{ESTRES\_TERMICO}, \texttt{RIESGO\_FUNGICO}, \texttt{FALLO\_VALVULA} y \texttt{BATERIA\_CRITICA}. \\
+\texttt{CicloRiego} & Entidad con FSM UML 2.5 & Controla estados \texttt{EVALUANDO}, \texttt{POSPUESTO}, \texttt{REGANDO} (compuesto), \texttt{FINALIZADO}, \texttt{ABORTADO\_\allowbreak TIMEOUT} (\texttt{MAX\_\allowbreak DURACION\_\allowbreak SEGUNDOS = 2700}) y \texttt{ERROR\_\allowbreak ACTUADOR}. \\
+\texttt{AlertaTemprana} & Parte Compuesta & Registra \texttt{HELADA}, \texttt{ESTRES\_\allowbreak TERMICO}, \texttt{RIESGO\_\allowbreak FUNGICO}, \texttt{FALLO\_\allowbreak VALVULA} y \texttt{BATERIA\_\allowbreak CRITICA}. \\
 \texttt{IEstrategiaRiego} & \textit{Strategy} (GoF) & Agregada (\texttt{1}) por \texttt{ServicioMonitoreoRiego}; define \texttt{calcularLaminaRiego(...)}. \\
 \texttt{IObservadorEvento} & \textit{Observer} (GoF) & Agregada (\texttt{0..*}) por \texttt{ServicioMonitoreoRiego}; implementada por \texttt{BitacoraAuditoriaObserver}. \\
 \texttt{IPuertoAPIMeteo} & \textit{Adapter} (GoF) & Puerto externo implementado por \texttt{AdaptadorAPIMeteo} (Open-Meteo + caché 3 h). \\
 \texttt{IPuertoServidorValvulas} & \textit{Adapter} (GoF) & Puerto externo implementado por \texttt{AdaptadorServidorValvulas} (timeout 3 s, 3 reintentos). \\
+\texttt{IRepositorioAgricola} & \textit{Repository} (Port) & Puerto de persistencia relacional implementado por \texttt{RepositorioSQLite}. \\
 \texttt{ServicioMonitoreoRiego} & \texttt{<<control>>} (\textit{Deep Module}) & Orquesta \texttt{procesarTelemetria}, \texttt{evaluarRiesgoFitosanitario} y \texttt{verificarTimeoutRiego}. \\
 \texttt{ControladorTelemetriaREST} & \texttt{<<boundary>>} & Expone \texttt{POST /api/lecturas}, control RBAC y exportación Excel (\texttt{.xlsx}). \\
 \bottomrule
@@ -166,30 +170,38 @@ En estricto cumplimiento de la disciplina de modelado de dominio (\textit{Ubiqui
 \end{table}
 
 \section{Requerimientos Funcionales, Interfaces Externas y Seguridad}
-Alineados directamente con la línea base de la Entrega Parcial (\texttt{DOC-20261112-WA0002.pdf}), la Tabla~\ref{tab:rf} consolida los requerimientos funcionales verificables, mientras la Tabla~\ref{tab:ie_seg} especifica las interfaces externas (\texttt{IE-01..04}) y restricciones de seguridad (\texttt{SEG-01..04}).
+Alineados con la línea base de la Entrega Parcial corregida (\texttt{PROYECTO\_\allowbreak FINAL\_\allowbreak AgriTech-1.pdf}), la Tabla~\ref{tab:rf} consolida los requerimientos funcionales verificables, mientras la Tabla~\ref{tab:ie_seg} especifica las interfaces externas (\texttt{IE-01..04}) y restricciones de seguridad (\texttt{SEG-01..04}). Respecto al SRS parcial (`RF-01..09` y `RNF-01..07`), se formalizan adicionalmente \texttt{RF-10} (tolerancia explícita a fallos en electroválvulas) y \texttt{RNF-08} (portabilidad serverless/contenedores) para respaldar el prototipo desplegado en producción.
 
-\begin{table}[H]
-\centering
+{\small
+\begin{longtable}{L{1.3cm} L{3.3cm} L{2.6cm} L{8.2cm}}
 \caption{Especificación Canónica de Requerimientos Funcionales (\texttt{ISO/IEC/IEEE 29148}).}
-\label{tab:rf}
-\small
-\begin{tabularx}{\textwidth}{l l p{3.2cm} Y}
+\label{tab:rf} \\
 \toprule
 \textbf{ID} & \textbf{Nombre Canónico} & \textbf{Actor Principal} & \textbf{Comportamiento Observable y Criterios Cuantitativos} \\
 \midrule
+\endfirsthead
+\multicolumn{4}{l}{\small\itshape Continuación Cuadro~\ref{tab:rf}} \\
+\toprule
+\textbf{ID} & \textbf{Nombre Canónico} & \textbf{Actor Principal} & \textbf{Comportamiento Observable y Criterios Cuantitativos} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{4}{r}{\small\itshape Continúa en la página siguiente...} \\
+\endfoot
+\bottomrule
+\endlastfoot
 \textbf{RF-01} & Ingesta, Visualización e Histórico de Telemetría & Gestor de sensores, Técnico agrícola & Mostrar para cada sector la última humedad ($[0.0, 100.0]\%$) y temperatura ($[-10.0, 60.0]^\circ\text{C}$), timestamp, estado de nodo y válvula, e histórico de lecturas de 30 días. HTTP 400 ante trama inválida. \\
 \textbf{RF-02} & Control Remoto de Nodos Sensores & Gestor de sensores & Encender y apagar cada nodo individualmente (\texttt{NODO-01..03}). Un nodo apagado no genera lecturas ni participa en decisiones de riego. \\
-\textbf{RF-03} & Generación y Descarga de Informe Excel (.xlsx) & Gestor de sensores, Técnico agrícola & Generar archivo Excel multipestaña (\texttt{.xlsx}) con lecturas históricas, sectores, nodos, fecha/hora, humedad y temperatura según rango seleccionado. \\
-\textbf{RF-04} & Automatización de Riego y Seguridad Temporal & Sistema (automático) & Activar electroválvula si $H < \text{umbralMinimo}$ ($30.0\%$) y cerrarla al alcanzar $H \ge \text{umbralObjetivo}$ ($60.0\%$) o ante temporizador máximo de seguridad hidráulica \texttt{after(45 min)} ($2700\text{ s} \rightarrow \texttt{ABORTADO\_TIMEOUT}$). \\
+\textbf{RF-03} & Generación y Descarga de Informe Excel (\texttt{.xlsx}) & Gestor de sensores, Técnico agrícola & Generar archivo Excel multipestaña (\texttt{.xlsx}) con lecturas históricas, sectores, nodos, fecha/hora, humedad y temperatura según rango seleccionado. \\
+\textbf{RF-04} & Automatización de Riego y Seguridad Temporal & Sistema (automático) & Activar electroválvula si $H < \text{umbralMinimo}$ ($30.0\%$) y cerrarla al alcanzar $H \ge \text{umbralObjetivo}$ ($60.0\%$) o ante temporizador máximo de seguridad hidráulica \texttt{after(45 min)} ($2700\text{ s} \rightarrow$ \texttt{ABORTADO\_\allowbreak TIMEOUT}). \\
 \textbf{RF-05} & Consulta Meteorológica y Postergación por Lluvia & Gestor de sensores, Sistema & Consultar pronóstico 6 h a \texttt{APIMeteo}; posponer riego si $\text{probLluvia} > 70.0\%$ y $H \ge \text{umbralCritico}$ ($15.0\%$). Si $H < 15.0\%$ (sequía crítica), activar riego de emergencia ignorando lluvia. \\
 \textbf{RF-06} & Alertas Tempranas Agroclimáticas y Anti-Spam & Técnico agrícola & Evaluar precedencia estricta: (1) Helada ($T_{\min} \le 2.0^\circ\text{C}$), (2) Estrés térmico ($T_{\text{suelo}} \ge 35.0^\circ\text{C}$ por $\ge 2\text{ h}$), (3) Riesgo fúngico ($HR > 85.0\%$ y $18.0 \le T_{\text{amb}} \le 28.0^\circ\text{C}$ por $\ge 6\text{ h}$). Suprimir duplicados en ventana de $12\text{ h}$. \\
 \textbf{RF-07} & Autenticación de Usuarios y Control por Rol (RBAC) & Todos los roles & Autenticar con correo y contraseña (\texttt{bcrypt} costo $\ge 10$) y restringir funciones según matriz RBAC (Tabla 5). Responder con HTTP 403 ante rol no autorizado. \\
-\textbf{RF-08} & Configuración de Umbrales Agronómicos & Técnico agrícola & Ajustar por sector umbrales $(critico, minimo, objetivo)$ validando $0 < critico < minimo < objetivo \le 100$. Valores por defecto: $15\%$, $30\%$ y $60\%$. \\
+\textbf{RF-08} & Configuración de Umbrales Agronómicos & Técnico agrícola & Ajustar por sector umbrales $(\text{crítico}, \text{mínimo}, \text{objetivo})$ validando $0 < \text{crítico} < \text{mínimo} < \text{objetivo} \le 100$. Valores por defecto: $15\%$, $30\%$ y $60\%$. \\
 \textbf{RF-09} & Gestión de Cuentas y Registro de Nodos IoT & Administrador del sistema & Crear, modificar y desactivar cuentas de usuario con rol asignado, y registrar nodos sensores asociándolos a un sector agrícola con token único (\texttt{IE-02}). \\
-\textbf{RF-10} & Tolerancia a Fallos en Actuadores y Resiliencia & Sistema, Técnico agrícola & Ante fallo tras 3 reintentos de \texttt{ServidorValvulas} ($3.0\text{ s}$ timeout), emitir alerta crítica \texttt{FALLO\_VALVULA} y conservar estado \texttt{ERROR\_VALVULA} hasta restablecimiento técnico. \\
-\bottomrule
-\end{tabularx}
-\end{table}
+\textbf{RF-10} & Tolerancia a Fallos en Actuadores y Resiliencia & Sistema, Técnico agrícola & Ante fallo tras 3 reintentos de \texttt{ServidorValvulas} ($3.0\text{ s}$ timeout), emitir alerta crítica \texttt{FALLO\_\allowbreak VALVULA} y conservar estado \texttt{ERROR\_\allowbreak VALVULA} hasta restablecimiento técnico. \\
+\end{longtable}
+}
 
 \begin{table}[H]
 \centering
@@ -220,7 +232,7 @@ Corrigiendo las ambigüedades detectadas en la primera entrega, la Tabla~\ref{ta
 \caption{Requerimientos No Funcionales cuantificables y criterios objetivos de verificación (\texttt{ISO/IEC 25010}).}
 \label{tab:rnf}
 \small
-\begin{tabularx}{\textwidth}{l p{3.2cm} p{4.0cm} Y}
+\begin{tabularx}{\textwidth}{l L{3.2cm} L{4.1cm} Y}
 \toprule
 \textbf{ID} & \textbf{Atributo ISO 25010} & \textbf{Métrica Objetivo Cuantificable} & \textbf{Mecanismo de Verificación Objetiva} \\
 \midrule
@@ -231,7 +243,7 @@ Corrigiendo las ambigüedades detectadas en la primera entrega, la Tabla~\ref{ta
 \textbf{RNF-05} & Seguridad --- Confidencialidad e Integridad & Contraseñas \texttt{bcrypt} (costo $\ge 10$); 100\% endpoints con RBAC estricto (HTTP 403) & Pruebas negativas automatizadas de acceso no autorizado y verificación de hashes en base de datos. \\
 \textbf{RNF-06} & Mantenibilidad --- Modificabilidad y Prueba & Incorporar nodo $\le 10\text{ min}$; $v(G) \le 10$; cobertura unitaria $\ge 70\%$ en modelo y control & Análisis de complejidad ciclomática de McCabe y suite TDD (21 pruebas automatizadas con 0 errores). \\
 \textbf{RNF-07} & Fiabilidad --- Madurez y Trazabilidad & 100\% de cambios de estado, umbrales, cuentas y ciclos en bitácora conservados $\ge 90\text{ d}$ & Registro inmutable en \texttt{bitacora\_auditoria} y verificación en \texttt{BitacoraAuditoriaObserver}. \\
-\textbf{RNF-08} & Portabilidad & Despliegue contenerizado autónomo (\texttt{Dockerfile} multi-stage y \texttt{render.yaml}) & Construcción y arranque autónomo vía Gunicorn + SQLite + \textit{healthcheck} en \texttt{/api/health}. \\
+\textbf{RNF-08} & Portabilidad & Despliegue autónomo en nube (\texttt{Vercel}, \texttt{Dockerfile} y \texttt{render.yaml}) & Arranque vía WSGI (\texttt{api/index.py}, \texttt{wsgi:app}) + \textit{healthcheck} en \texttt{/api/health}. \\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -242,20 +254,20 @@ Corrigiendo las ambigüedades detectadas en la primera entrega, la Tabla~\ref{ta
 \caption{Matriz de Trazabilidad Horizontal Completa (Requerimientos $\leftrightarrow$ Historias Scrum $\leftrightarrow$ Casos de Uso $\leftrightarrow$ Artefacto UML $\leftrightarrow$ Código y Pruebas).}
 \label{tab:trazabilidad}
 \scriptsize
-\begin{tabularx}{\textwidth}{p{1.8cm} p{2.1cm} p{2.8cm} Y p{3.8cm}}
+\begin{tabularx}{\textwidth}{L{1.5cm} L{2.1cm} L{2.7cm} L{4.7cm} Y}
 \toprule
 \textbf{Req.} & \textbf{HU / CU} & \textbf{Artefacto UML} & \textbf{Implementación Python (\texttt{src/})} & \textbf{Prueba TDD Verificada} \\
 \midrule
-RF-01, IE-02 & HU-02, HU-03, HU-10 / CU-03, CU-04 & Secuencia (\texttt{POST /api/lecturas}) & \texttt{ControladorTelemetriaREST.postLecturaTelemetria}, \texttt{SensorSuelo.validarTrama} & \texttt{test\_flujo\_completo\_cu04\_apertura\_y\_cierre...}, \texttt{test\_rutas\_detalle\_grafica\_sector...} \\
-RF-02, IE-02 & HU-01 / CU-02 & Clases + RBAC & \texttt{SensorSuelo.cambiarEstadoOperativo}, \texttt{ServicioMonitoreoRiego.cambiarEstadoNodo} & \texttt{test\_endpoints\_flask\_rbac\_seguridad...} \\
-RF-03 & HU-08 / CU-06 & Clases (\texttt{<<boundary>>}) & \texttt{ControladorTelemetriaREST.generarArchivoXlsxBytes} & \texttt{test\_endpoints\_flask\_rbac\_seguridad...} \\
-RF-04, IE-03 & HU-04, HU-09 / CU-04 & Máquina de Estados \texttt{CicloRiego} & \texttt{CicloRiego.transicionarA}, \texttt{ServicioMonitoreoRiego.verificarTimeoutRiego} & \texttt{test\_timeout\_seguridad\_45\_min\_aborta...} \\
-RF-05, IE-04 & HU-05, HU-06 / CU-04, CU-05 & Secuencia + Clases (\textit{Strategy}) & \texttt{EstrategiaRiegoAgronomico.calcularLaminaRiego}, \texttt{AdaptadorAPIMeteo} & \texttt{test\_camino1..6}, \texttt{test\_seam\_api\_meteo\_cache\_3h\_y\_expiracion} \\
-RF-06 & HU-07 / CU-07 & Secuencia (\texttt{par}) + Clases (\textit{Observer}) & \texttt{ServicioMonitoreoRiego.evaluarRiesgoFitosanitario}, \texttt{SectorAgricola.tieneAlertaReciente} & \texttt{test\_fitosanitario\_*}, \texttt{test\_antispam\_12h\_suprime\_alerta...} \\
-RF-07, SEG-01 & HU-14 / CU-01 & Boundary RBAC + Seguridad & \texttt{ControladorTelemetriaREST}, \texttt{RepositorioSQLite.obtenerUsuarioPorEmail} & \texttt{test\_endpoints\_flask\_rbac\_seguridad...} \\
-RF-08 & HU-11 / CU-08 & Clases (Invariantes Dominio) & \texttt{SectorAgricola.configurarUmbrales} & \texttt{test\_invariantes\_umbrales\_y\_sensor...} \\
-RF-09, SEG-02 & HU-12, HU-13 / CU-10, CU-11 & Repositorio Relacional & \texttt{RepositorioSQLite.crearUsuario}, \texttt{registrarNodo}, tokens de dispositivo & \texttt{test\_endpoints\_flask\_rbac\_seguridad...} \\
-RF-10, IE-03 & CU-04 & Secuencia (\texttt{loop 1..3}, \texttt{alt Fallo}) & \texttt{AdaptadorServidorValvulas}, \texttt{SectorAgricola.registrarAlerta(FALLO\_VALVULA)} & \texttt{test\_seam\_servidor\_valvulas\_reintentos...} \\
+RF-01, IE-02 & HU-02, HU-03, HU-10 / CU-03, CU-04 & Secuencia (\texttt{POST /api/\allowbreak lecturas}) & \texttt{ControladorTelemetriaREST.\allowbreak postLecturaTelemetria}, \texttt{SensorSuelo.\allowbreak validarTrama} & \texttt{test\_\allowbreak flujo\_\allowbreak completo\_\allowbreak cu04\_\allowbreak apertura\_\allowbreak y\_\allowbreak cierre...}, \texttt{test\_\allowbreak rutas\_\allowbreak detalle\_\allowbreak grafica\_\allowbreak sector...} \\
+RF-02, IE-02 & HU-01 / CU-02 & Clases + RBAC & \texttt{SensorSuelo.\allowbreak cambiarEstadoOperativo}, \texttt{ServicioMonitoreoRiego.\allowbreak cambiarEstadoNodo} & \texttt{test\_\allowbreak endpoints\_\allowbreak flask\_\allowbreak rbac\_\allowbreak seguridad...} \\
+RF-03 & HU-08 / CU-06 & Clases (\texttt{<<boundary>>}) & \texttt{ControladorTelemetriaREST.\allowbreak generarArchivoXlsxBytes} & \texttt{test\_\allowbreak endpoints\_\allowbreak flask\_\allowbreak rbac\_\allowbreak seguridad...} \\
+RF-04, IE-03 & HU-04, HU-09 / CU-04 & Máquina de Estados \texttt{CicloRiego} & \texttt{CicloRiego.\allowbreak transicionarA}, \texttt{ServicioMonitoreoRiego.\allowbreak verificarTimeoutRiego} & \texttt{test\_\allowbreak timeout\_\allowbreak seguridad\_\allowbreak 45\_\allowbreak min\_\allowbreak aborta...} \\
+RF-05, IE-04 & HU-05, HU-06 / CU-04, CU-05 & Secuencia + Clases (\textit{Strategy}) & \texttt{EstrategiaRiegoAgronomico.\allowbreak calcularLaminaRiego}, \texttt{AdaptadorAPIMeteo} & \texttt{test\_\allowbreak camino1..6}, \texttt{test\_\allowbreak seam\_\allowbreak api\_\allowbreak meteo\_\allowbreak cache\_\allowbreak 3h\_\allowbreak y\_\allowbreak expiracion} \\
+RF-06 & HU-07 / CU-07 & Secuencia (\texttt{par}) + Clases (\textit{Observer}) & \texttt{ServicioMonitoreoRiego.\allowbreak evaluarRiesgoFitosanitario}, \texttt{SectorAgricola.\allowbreak tieneAlertaReciente} & \texttt{test\_\allowbreak fitosanitario\_*}, \texttt{test\_\allowbreak antispam\_\allowbreak 12h\_\allowbreak suprime\_\allowbreak alerta...} \\
+RF-07, SEG-01 & HU-14 / CU-01 & Boundary RBAC + Seguridad & \texttt{ControladorTelemetriaREST}, \texttt{RepositorioSQLite.\allowbreak obtenerUsuarioPorEmail} & \texttt{test\_\allowbreak endpoints\_\allowbreak flask\_\allowbreak rbac\_\allowbreak seguridad...} \\
+RF-08 & HU-11 / CU-08 & Clases (Invariantes Dominio) & \texttt{SectorAgricola.\allowbreak configurarUmbrales} & \texttt{test\_\allowbreak invariantes\_\allowbreak umbrales\_\allowbreak y\_\allowbreak sensor...} \\
+RF-09, SEG-02 & HU-12, HU-13 / CU-10, CU-11 & Repositorio Relacional & \texttt{RepositorioSQLite.\allowbreak crearUsuario}, \texttt{registrarNodo}, tokens de dispositivo & \texttt{test\_\allowbreak endpoints\_\allowbreak flask\_\allowbreak rbac\_\allowbreak seguridad...} \\
+RF-10, IE-03 & CU-04 & Secuencia (\texttt{loop 1..3}, \texttt{alt Fallo}) & \texttt{AdaptadorServidorValvulas}, \texttt{SectorAgricola.\allowbreak registrarAlerta(\allowbreak FALLO\_\allowbreak VALVULA)} & \texttt{test\_\allowbreak seam\_\allowbreak servidor\_\allowbreak valvulas\_\allowbreak reintentos...} \\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -302,22 +314,24 @@ El diagrama de secuencia modela el flujo crítico de procesamiento telemétrico 
 \draw[sync] (3.2,-1.7) -- node[above, font=\scriptsize]{\texttt{2: procesarTelemetria(idNodo, H, T, token, ts)}} (6.6,-1.7);
 
 % Fragmento alt validación token/rango
-\draw[frag] (2.4,-2.05) rectangle (22.6,-4.85);
+\draw[frag] (2.4,-2.05) rectangle (22.6,-4.05);
 \node[fraglbl, anchor=north west] at (2.4,-2.05) {\textbf{alt} [Token inválido o Trama fuera de rango]};
 \draw[ret] (6.6,-2.95) -- node[above, font=\scriptsize]{\texttt{throw TokenInvalido / TelemetriaFueraDeRango}} (3.2,-2.95);
 \draw[ret] (3.2,-3.45) -- node[above, font=\scriptsize]{\texttt{HTTP 401 / 400}} (0,-3.45);
-\draw[dashed, color=usaGris] (2.4,-3.85) -- (22.6,-3.85);
-\node[anchor=west, font=\scriptsize\itshape] at (2.55,-4.15) {[Trama válida autenticada]};
-\draw[sync] (6.6,-4.55) -- node[above, font=\scriptsize]{\texttt{3: sector.registrarLectura(lectura)}} (18.8,-4.55);
+\draw[dashed, color=usaGris] (2.4,-3.75) -- (22.6,-3.75);
+\node[anchor=west, font=\scriptsize\itshape] at (2.55,-3.92) {[Trama válida autenticada]};
 
-% Fragmento par: consulta asíncrona APIMeteo + evaluación fitosanitaria
-\draw[frag] (5.8,-5.15) rectangle (22.6,-9.35);
-\node[fraglbl, anchor=north west] at (5.8,-5.15) {\textbf{par} [Evaluación paralela clima y riesgo fitosanitario]};
-\draw[async] (6.6,-6.05) -- node[above, font=\scriptsize]{\texttt{4: consultarPronostico(lat, lon) [timeout 5s / caché 3h]}} (12.8,-6.05);
-\draw[ret] (12.8,-6.65) -- node[above, font=\scriptsize]{\texttt{5: PronosticoMeteo(probLluvia, T\_min)}} (6.6,-6.65);
-\draw[dashed, color=usaGris] (5.8,-7.05) -- (22.6,-7.05);
-\draw[sync] (6.6,-7.6) .. controls (8.0,-7.6) and (8.0,-8.25) .. node[right, font=\scriptsize]{\texttt{6: evaluarRiesgoFitosanitario(sector, lectura, pron)}} (6.6,-8.25);
-\draw[sync] (6.6,-8.9) -- node[above, font=\scriptsize]{\texttt{7: [si Alerta != None] actualizarAlerta(alerta)}} (21.8,-8.9);
+% Fragmento par: dos operaciones independientes (persistencia BD y consulta APIMeteo)
+\draw[frag] (5.8,-4.3) rectangle (22.6,-7.55);
+\node[fraglbl, anchor=north west] at (5.8,-4.3) {\textbf{par} [Persistencia local y consulta climática independiente]};
+\draw[sync] (6.6,-5.45) -- node[above, font=\scriptsize]{\texttt{3: guardarSector(sector.registrarLectura(lectura))}} (18.8,-5.45);
+\draw[dashed, color=usaGris] (5.8,-5.85) -- (22.6,-5.85);
+\draw[async] (6.6,-6.45) -- node[above, font=\scriptsize]{\texttt{4: consultarPronostico(lat, lon) [timeout 5s / caché 3h]}} (12.8,-6.45);
+\draw[ret] (12.8,-7.1) -- node[above, font=\scriptsize]{\texttt{5: PronosticoMeteo(probLluvia, T\_min)}} (6.6,-7.1);
+
+% Evaluación fitosanitaria secuencial posterior al retorno de pron
+\draw[sync] (6.6,-7.95) .. controls (8.0,-7.95) and (8.0,-8.55) .. node[right, font=\scriptsize]{\texttt{6: evaluarRiesgoFitosanitario(sector, lectura, pron)}} (6.6,-8.55);
+\draw[sync] (6.6,-9.15) -- node[above, font=\scriptsize]{\texttt{7: [si Alerta != None] actualizarAlerta(alerta)}} (21.8,-9.15);
 
 % Cálculo Strategy
 \draw[sync] (6.6,-9.95) -- node[above, font=\scriptsize]{\texttt{8: calcularLaminaRiego(H, H\_min, H\_crit, H\_obj, prob, T)}} (9.8,-9.95);
@@ -336,15 +350,15 @@ El diagrama de secuencia modela el flujo crítico de procesamiento telemétrico 
 \draw[dashed, color=usaGris] (5.8,-14.25) -- (22.6,-14.25);
 \node[anchor=west, font=\scriptsize\itshape] at (5.95,-14.55) {[Se requiere riego: laminaMm > 0.0]};
 
-% Loop interno 3 reintentos
+% Loop interno hasta 3 reintentos con salida temprana al ACK exitoso
 \draw[frag, color=usaAzul] (6.2,-14.9) rectangle (16.6,-17.0);
-\node[fraglbl, anchor=north west] at (6.2,-14.9) {\textbf{loop} [intento = 1 .. 3 (timeout 3 s)]};
+\node[fraglbl, anchor=north west] at (6.2,-14.9) {\textbf{loop} [intento = 1 .. 3 mientras !ackOK (timeout 3 s)]};
 \draw[sync] (6.6,-15.9) -- node[above, font=\scriptsize]{\texttt{12: PUT /valvulas/\{id\} activarValvula(idSector, durSeg)}} (15.8,-15.9);
-\draw[ret] (15.8,-16.55) -- node[above, font=\scriptsize]{\texttt{EstadoValvulaDTO / TimeoutError}} (6.6,-16.55);
+\draw[ret] (15.8,-16.55) -- node[above, font=\scriptsize]{\texttt{EstadoValvulaDTO(ackOK) / TimeoutError}} (6.6,-16.55);
 
 % Alt resultado apertura
 \draw[frag, color=usaVerde] (6.2,-17.25) rectangle (22.3,-19.55);
-\node[fraglbl, anchor=north west] at (6.2,-17.25) {\textbf{alt} [Éxito en apertura]};
+\node[fraglbl, anchor=north west] at (6.2,-17.25) {\textbf{alt} [Éxito en apertura (ackOK)]};
 \draw[sync] (6.6,-18.1) -- node[above, font=\scriptsize]{\texttt{13a: estado=REGANDO(FLUJO\_ACTIVO) + registrarAuditoria}} (21.8,-18.1);
 \draw[dashed, color=usaGris] (6.2,-18.45) -- (22.3,-18.45);
 \node[anchor=west, font=\scriptsize\itshape] at (6.35,-18.75) {[Fallo tras 3 reintentos]};
@@ -378,14 +392,14 @@ alt Token invalido o trama fuera de rango
     Svc --> Ctrl : TokenDispositivoInvalidoError / TelemetriaFueraDeRangoError
     Ctrl --> Nodo : HTTP 401 / 400
 else Trama valida autenticada
-    Svc -> Repo : guardarSector(sector.registrarLectura(lectura))
-    par Consulta climatica y evaluacion fitosanitaria
+    par Persistencia local y consulta climatica independiente
+        Svc -> Repo : guardarSector(sector.registrarLectura(lectura))
+    else Consulta asincrona Open-Meteo
         Svc ->> Meteo : consultarPronostico(lat, lon) [5s timeout / 3h cache]
         Meteo --> Svc : PronosticoMeteo(probLluvia, T_min)
-    else Precedencia: HELADA -> ESTRES_TERMICO -> RIESGO_FUNGICO
-        Svc -> Svc : evaluarRiesgoFitosanitario(sector, lectura, pron)
-        Svc -> Obs : actualizarAlerta(alerta) [si Alerta != None]
     end
+    Svc -> Svc : evaluarRiesgoFitosanitario(sector, lectura, pron)
+    Svc -> Obs : actualizarAlerta(alerta) [si Alerta != None]
     Svc -> Est : calcularLaminaRiego(H, H_min, H_crit, H_obj, probLluvia, T)
     Est --> Svc : laminaMm
     alt Ciclo activo alcanzando H >= 60% o Timeout >= 2700s
@@ -394,11 +408,11 @@ else Trama valida autenticada
     else Riego pospuesto por lluvia > 70% con H >= 15%
         Svc -> Obs : registrarEventoAuditoria("SISTEMA", "RIEGO_POSPUESTO_LLUVIA")
     else Riego requerido (laminaMm > 0)
-        loop intento = 1..3 [timeout 3s por intento]
+        loop intento = 1..3 mientras !ackOK [timeout 3s]
             Svc -> Valv : PUT /valvulas/{id} activarValvula(idSector, durSeg)
-            Valv --> Svc : EstadoValvulaDTO / TimeoutError
+            Valv --> Svc : EstadoValvulaDTO(ackOK) / TimeoutError
         end
-        alt Apertura exitosa
+        alt Apertura exitosa (ackOK)
             Svc -> Obs : registrarEventoAuditoria("SISTEMA", "RIEGO_INICIADO")
         else Fallo tras 3 reintentos
             Svc -> Obs : actualizarAlerta(FALLO_VALVULA)
@@ -417,7 +431,7 @@ end
 \chapter{Diseño Estructural (Diagrama de Clases) y Máquina de Estados}
 
 \section{Arquitectura de Módulos Profundos, Patrones GoF y Composición vs. Agregación}
-Siguiendo la skill \texttt{codebase-design}, el sistema adopta una arquitectura limpia hexagonal dividida en capas de Dominio (\texttt{src/domain/}), Aplicación (\texttt{src/application/}) e Infraestructura (\texttt{src/\allowbreak infrastructure/}). Los aspectos clave del diseño estructural son:
+Aplicando principios de diseño modular (\textit{Deep Modules}) y arquitectura limpia hexagonal, el sistema se divide en capas de Dominio (\texttt{src/domain/}), Aplicación (\texttt{src/application/}) e Infraestructura (\texttt{src/\allowbreak infrastructure/}). Los aspectos clave del diseño estructural son:
 
 \begin{itemize}[leftmargin=*]
     \item \textbf{Composición Fuerte (\texttt{*--}, rombo relleno negro)}: \texttt{SectorAgricola} actúa como raíz de agregado y ejerce propiedad exclusiva del ciclo de vida sobre \texttt{ZonaCultivo} (\texttt{1..*}), \texttt{SensorSuelo} (\texttt{1..*}), \texttt{LecturaTelemetria} (\texttt{0..*}), \texttt{CicloRiego} (\texttt{0..*}) y \texttt{AlertaTemprana} (\texttt{0..*}). A nivel relacional SQLite se refuerza con restricciones \texttt{ON DELETE CASCADE}.
@@ -426,7 +440,7 @@ Siguiendo la skill \texttt{codebase-design}, el sistema adopta una arquitectura 
     \begin{enumerate}
         \item \textit{Strategy}: \texttt{IEstrategiaRiego} / \texttt{EstrategiaRiegoAgronomico} encapsula la lógica de cálculo de lámina de riego y compensación térmica.
         \item \textit{Observer}: \texttt{IObservadorEvento} / \texttt{BitacoraAuditoriaObserver} desacopla las notificaciones de alertas y la auditoría estructurada JSON.
-        \item \textit{Adapter}: \texttt{AdaptadorAPIMeteo} y \texttt{AdaptadorServidorValvulas} traducen las APIs externas (\texttt{Open-Meteo} y actuadores REST) hacia puertos del núcleo de dominio.
+        \item \textit{Adapter}: \texttt{AdaptadorAPIMeteo} y \texttt{AdaptadorServidorValvulas} traducen las APIs de terceros (Open-Meteo y actuadores REST) hacia puertos del núcleo de dominio.
     \end{enumerate}
 \end{itemize}
 
@@ -493,7 +507,7 @@ Siguiendo la skill \texttt{codebase-design}, el sistema adopta una arquitectura 
 \node[clase] (estimpl) at (18.2, 9.9) {
     \textbf{\texttt{EstrategiaRiegoAgronomico}}
     \nodepart{two}
-    \texttt{\# v(G) = 6 (P = 5)}
+    \textit{(Sin estado mutable; \{v(G) = 6\})}
     \nodepart{three}
     \texttt{+ calcularLaminaRiego(...): float}
 };
@@ -501,9 +515,11 @@ Siguiendo la skill \texttt{codebase-design}, el sistema adopta una arquitectura 
 \node[clase] (obsimpl) at (18.2, 6.7) {
     \textbf{\texttt{BitacoraAuditoriaObserver}}
     \nodepart{two}
-    \texttt{+ alertasEmitidas: List<AlertaTemprana>}\\
-    \texttt{+ eventosAuditoria: List<Dict>}
+    \texttt{- alertasEmitidas: List<AlertaTemprana>}\\
+    \texttt{- eventosAuditoria: List<Dict>}
     \nodepart{three}
+    \texttt{+ \{property\} alertasEmitidas: List}\\
+    \texttt{+ \{property\} eventosAuditoria: List}\\
     \texttt{+ actualizarAlerta(alerta): void}\\
     \texttt{+ registrarEventoAuditoria(...): void}
 };
@@ -543,6 +559,28 @@ Siguiendo la skill \texttt{codebase-design}, el sistema adopta una arquitectura 
     \nodepart{three}
     \texttt{+ activarValvula(id, dur): EstadoValvulaDTO}\\
     \texttt{+ desactivarValvula(id): EstadoValvulaDTO}
+};
+
+\node[interfaz] (irepo) at (-9.4, -9.2) {
+    \textbf{\texttt{<<interface>> IRepositorioAgricola}}
+    \nodepart{two}
+    \textit{(Puerto de Persistencia)}
+    \nodepart{three}
+    \texttt{+ obtenerSector(id): SectorAgricola}\\
+    \texttt{+ guardarSector(sector): void}\\
+    \texttt{+ obtenerUsuarioPorEmail(email): Dict}
+};
+
+\node[clase] (reposqlite) at (0.0, -9.2) {
+    \textbf{\texttt{RepositorioSQLite}}
+    \nodepart{two}
+    \texttt{- dbPath: str}\\
+    \texttt{- \_lock: threading.RLock}
+    \nodepart{three}
+    \texttt{+ sembrarDatosIniciales(): void}\\
+    \texttt{+ obtenerSector(id): SectorAgricola}\\
+    \texttt{+ guardarSector(sector): void}\\
+    \texttt{+ obtenerAuditoria(lim): List<Dict>}
 };
 
 % Raíz de Agregado SectorAgricola
@@ -640,13 +678,15 @@ Siguiendo la skill \texttt{codebase-design}, el sistema adopta una arquitectura 
 \draw[agreg] (svc.east) -- ++(0.95,0) |- node[pos=0.72, above, font=\tiny\bfseries]{Agregación (1)} (iest.west);
 \draw[agreg] (svc.east) -- ++(0.95,0) |- node[pos=0.72, below, font=\tiny\bfseries]{Agregación (0..*)} (iobs.west);
 
-% Implementaciones GoF
+% Implementaciones GoF y Puertos (rutas separadas de ctrl -> svc)
 \draw[impl] (estimpl.west) -- (iest.east);
 \draw[impl] (obsimpl.west) -- (iobs.east);
 \draw[impl] (ameteo.north) -- (imeteo.south);
 \draw[impl] (avalv.north) -- (ivalv.south);
-\draw[dep] (svc.west) -- ++(-0.85,0) |- (imeteo.east);
-\draw[dep] (svc.west) -- ++(-0.85,0) |- (ivalv.east);
+\draw[impl] (reposqlite.west) -- (irepo.east);
+\draw[dep] ([yshift=-1.15cm]svc.west) -- ++(-1.55,0) coordinate (svcport) |- (imeteo.east);
+\draw[dep] (svcport) |- (ivalv.east);
+\draw[dep] (svcport) |- (irepo.east);
 
 % Composición Fuerte (Rombo relleno negro)
 \draw[comp] (sector.east) -- node[above, pos=0.52, font=\tiny\bfseries]{Composición (1..*)} (zona.west);
@@ -661,7 +701,7 @@ Siguiendo la skill \texttt{codebase-design}, el sistema adopta una arquitectura 
 \end{figure}
 
 \section{Diagrama de Máquina de Estados UML 2.5 de \texttt{CicloRiego}}
-El comportamiento dinámico de \texttt{CicloRiego} garantiza transiciones atómicas verificadas por \texttt{CicloRiego.\allowbreak transicionarA()} y evita ciclos infinitos mediante el temporizador de seguridad hidráulica \texttt{after(45 min)} ($2700\text{ s}$).
+El comportamiento dinámico de \texttt{CicloRiego} garantiza transiciones atómicas mediante \texttt{CicloRiego.\allowbreak transicionarA()} y evita ciclos infinitos mediante un único temporizador de seguridad hidráulica \texttt{after(45 min)} ($2700\text{ s}$) asociado a la frontera del estado compuesto \texttt{REGANDO}.
 
 \begin{figure}[H]
 \centering
@@ -680,37 +720,41 @@ El comportamiento dinámico de \texttt{CicloRiego} garantiza transiciones atómi
 \node[state, fill=orange!12, draw=usaAmbar] (posp) at (3.2, 0.2) {\texttt{POSPUESTO}};
 
 % Estado Compuesto REGANDO
-\node[substate] (sub1) at (9.4, 5.1) {\texttt{VALVULA\_SOLICITANDO}\\ \texttt{\_APERTURA}};
-\node[substate] (sub2) at (13.3, 5.1) {\texttt{FLUJO\_ACTIVO}\\ \textit{(do / irrigar y medir H)}};
-\node[substate] (sub3) at (13.3, 2.4) {\texttt{VALVULA\_SOLICITANDO}\\ \texttt{\_CIERRE}};
+\node[substate] (sub1) at (10.7, 5.1) {\texttt{VALVULA\_SOLICITANDO}\\ \texttt{\_APERTURA}};
+\node[substate] (sub2) at (14.6, 5.1) {\texttt{FLUJO\_ACTIVO}\\ \textit{(do / irrigar y medir H)}};
+\node[substate] (sub3) at (14.6, 2.3) {\texttt{VALVULA\_SOLICITANDO}\\ \texttt{\_CIERRE}};
 
 \begin{pgfonlayer}{background}
     \node[draw=usaAzul, fill=usaAzulClaro!30, rounded corners=8pt, fit=(sub1)(sub2)(sub3), inner sep=11pt, label={[anchor=north west, font=\scriptsize\bfseries, color=usaAzul]north west:\texttt{REGANDO (Estado Compuesto)}}] (regando) {};
 \end{pgfonlayer}
 
-% Estados Terminales
-\node[termstate, draw=usaVerde, fill=usaVerdeClaro] (fin) at (20.4, 5.4) {\texttt{FINALIZADO}\\ \scriptsize(OBJETIVO\_ALCANZADO)};
-\node[termstate] (tout) at (20.4, 2.2) {\texttt{ABORTADO\_TIMEOUT}\\ \scriptsize(TIMEOUT\_MAXIMO\_45MIN)};
-\node[termstate] (err) at (11.2, 0.0) {\texttt{ERROR\_ACTUADOR}\\ \scriptsize(FALLO\_VALVULA)};
+% Estados Terminales con holgura horizontal limpia
+\node[termstate, draw=usaVerde, fill=usaVerdeClaro] (fin) at (23.8, 5.6) {\texttt{FINALIZADO}\\ \scriptsize(OBJETIVO\_ALCANZADO)};
+\node[termstate] (tout) at (23.8, 2.3) {\texttt{ABORTADO\_TIMEOUT}\\ \scriptsize(TIMEOUT\_MAXIMO\_45MIN)};
+\node[termstate] (err) at (12.6, -0.3) {\texttt{ERROR\_ACTUADOR}\\ \scriptsize(FALLO\_VALVULA)};
 
-\node[finalstate] (end1) at (23.4, 5.4) {};
-\node[finalstate] (end2) at (23.4, 2.2) {};
-\node[finalstate] (end3) at (14.4, 0.0) {};
+\node[finalstate] (end1) at (26.8, 5.6) {};
+\node[finalstate] (end2) at (26.8, 2.3) {};
+\node[finalstate] (end3) at (15.8, -0.3) {};
 
-% Transiciones
+% Transiciones principales
 \draw[trans] (init) -- node[above, font=\tiny]{\texttt{iniciar}} (eval);
 \draw[trans] (eval.south west) -- node[left, align=right, font=\tiny]{\texttt{telemetriaRecibida [15\% <= H < 30\%}\\ \texttt{and probLluvia > 70\%] / posponer()}} (posp.north west);
 \draw[trans] (posp.north east) -- node[right, align=left, font=\tiny]{\texttt{telemetriaRecibida}\\ \texttt{[probLluvia <= 70\% or H < 15\%]}} (eval.south east);
 
 \draw[trans] (eval.east) -- node[above, align=center, font=\tiny]{\texttt{telemetriaRecibida [H < 30\% and}\\ \texttt{(H < 15\% or probLluvia <= 70\%)]}\\ \texttt{/ activarValvula()}} (regando.west);
 
-% Subtransiciones dentro de REGANDO
-\draw[trans] (sub1.east) -- node[above, font=\tiny]{\texttt{ackOK}} (sub2.west);
-\draw[trans] (sub2.south) -- node[right, align=left, font=\tiny]{\texttt{H >= H\_obj (60\%)}\\ \texttt{o after(45 min)}} (sub3.north);
+% Transiciones directas hacia FINALIZADO presentes en _TRANSICIONES_CICLO_VALIDAS (carriles separados)
+\draw[trans] (eval.north) -- ++(0, 2.2) -| node[pos=0.25, below, font=\tiny]{\texttt{telemetriaRecibida [H >= H\_min] / guardarFin()}} ([xshift=-0.5cm]fin.north);
+\draw[trans] (posp.south) -- ++(0, -1.2) -| ++(-4.6, 8.95) -| node[pos=0.25, above, font=\tiny]{\texttt{telemetriaRecibida [H >= H\_min] / finalizar()}} ([xshift=0.5cm]fin.north);
 
-% Salidas de REGANDO hacia estados terminales sin superposición
-\draw[trans] (sub3.north east) .. controls (16.4,4.2) and (17.2,5.4) .. node[above, pos=0.55, font=\tiny]{\texttt{cierreOK [H >= 60\%] / guardarFin()}} (fin.west);
-\draw[trans] (sub3.east) -- node[below, align=center, font=\tiny]{\texttt{\textbf{after(45 min)} [t >= 2700 s]}\\ \texttt{/ desactivarValvula()}} (tout.west);
+% Subtransiciones dentro de REGANDO (sin after duplicado)
+\draw[trans] (sub1.east) -- node[above, font=\tiny]{\texttt{ackOK}} (sub2.west);
+\draw[trans] (sub2.south) -- node[right, align=left, font=\tiny]{\texttt{H >= H\_obj (60\%)}} (sub3.north);
+
+% Salidas hacia estados terminales: cierre normal desde sub3 y timeout único desde frontera REGANDO
+\draw[trans] (sub3.north east) .. controls (18.2, 4.3) and (19.6, 5.6) .. node[above left, pos=0.58, align=center, font=\tiny]{\texttt{cierreOK [H >= 60\%]}\\ \texttt{/ guardarFin()}} (fin.west);
+\draw[trans] ([yshift=-1.35cm]regando.east) -- node[below, pos=0.54, align=center, font=\tiny]{\texttt{\textbf{after(45 min)} [t >= 2700 s]}\\ \texttt{/ desactivarValvula()}} (tout.west);
 \draw[trans] (regando.south) -- node[left, align=right, font=\tiny]{\texttt{falloValvula [intentos == 3]}\\ \texttt{/ emitirAlerta(FALLO\_VALVULA)}} (err.north);
 
 % Transiciones hacia nodos finales UML
@@ -720,7 +764,7 @@ El comportamiento dinámico de \texttt{CicloRiego} garantiza transiciones atómi
 
 \end{tikzpicture}
 }}
-\caption{Diagrama de Máquina de Estados UML 2.5 para \texttt{CicloRiego} con subestados anidados en \texttt{REGANDO} y evento temporal \texttt{after(45 min)}.}
+\caption{Diagrama de Máquina de Estados UML 2.5 para \texttt{CicloRiego} con subestados anidados en \texttt{REGANDO}, transiciones completas de cierre y temporizador único \texttt{after(45 min)}.}
 \end{figure}
 
 % ==============================================================================
@@ -733,23 +777,23 @@ El comportamiento dinámico de \texttt{CicloRiego} garantiza transiciones atómi
 \centering
 \caption{Matriz de aseguramiento de calidad \texttt{ISO/IEC 25010} aplicada a AgriTech Precision.}
 \small
-\begin{tabularx}{\textwidth}{l l Y}
+\begin{tabularx}{\textwidth}{L{3.5cm} L{3.2cm} Y}
 \toprule
 \textbf{Característica ISO 25010} & \textbf{Subcaracterística Clave} & \textbf{Evidencia Implementada y Verificada en el Proyecto} \\
 \midrule
-\textbf{1. Adecuación Funcional} & Completitud y Corrección & Cálculos agronómicos exactos ($15\%, 30\%, 60\%, 70\%, 2^{\circ}\text{C}, 35^{\circ}\text{C}, >85\%$), máquina de estados completa y exportación Excel \texttt{.xlsx}. \\
+\textbf{1. Adecuación Funcional} & Completitud y Corrección & Cálculos agronómicos exactos ($15\%$, $30\%$, $60\%$, $70\%$, $2^{\circ}\text{C}$, $35^{\circ}\text{C}$, $>85\%$), máquina de estados completa y exportación Excel \texttt{.xlsx}. \\
 \textbf{2. Eficiencia de Desempeño} & Comportamiento Temporal & Latencia $p95 < 100\text{ ms}$ en procesamiento local y caché climática de $3\text{ h}$ que reduce llamadas de red innecesarias. \\
 \textbf{3. Compatibilidad} & Interoperabilidad & Contratos REST JSON normalizados (\texttt{IE-02}), consumo estándar Open-Meteo (\texttt{IE-04}) y exportación estándar OpenXML (\texttt{.xlsx}). \\
 \textbf{4. Usabilidad} & Operabilidad & Panel Web responsive unificado con indicadores visuales por estado, gráficos SVG y banco de simulación de escenarios en 1 clic. \\
 \textbf{5. Fiabilidad} & Tolerancia a Fallos y Disponibilidad & Reintentos ($3\times$) en \texttt{AdaptadorServidorValvulas}, respaldo de caché 3 h en \texttt{AdaptadorAPIMeteo}, y preservación de estado \texttt{ERROR\_VALVULA}. \\
 \textbf{6. Seguridad} & Confidencialidad y Trazabilidad & Tokens por nodo (\texttt{X-Device-Token} / 401), RBAC estricto (HTTP 403), contraseñas \texttt{bcrypt} y bitácora persistente SQLite + JSON. \\
 \textbf{7. Mantenibilidad} & Modularidad y Capacidad de Prueba & Puertos abstractos (\textit{Ports \& Adapters}), \textit{Deep Module} \texttt{ServicioMonitoreoRiego} y $v(G) \le 9$ en métodos críticos. \\
-\textbf{8. Portabilidad} & Instalabilidad & Empaquetado autónomo mediante \texttt{Dockerfile}, \texttt{render.yaml}, \texttt{requirements.txt} y \texttt{wsgi:app}. \\
+\textbf{8. Portabilidad} & Instalabilidad & Empaquetado autónomo mediante \texttt{Vercel}, \texttt{Dockerfile}, \texttt{render.yaml}, \texttt{requirements.txt} y \texttt{wsgi:app}. \\
 \bottomrule
 \end{tabularx}
 \end{table}
 
-\section{Complejidad Ciclomática de McCabe (\texorpdfstring{$v(G)$}{v(G)}) y Caminos Base (\texttt{tdd})}
+\section{Complejidad Ciclomática de McCabe (\texorpdfstring{$v(G)$}{v(G)}) y Caminos Base (TDD)}
 
 \subsection{Función Crítica 1: \texttt{EstrategiaRiegoAgronomico.calcularLaminaRiego()}}
 El método encapsula 5 predicados atómicos simples ($P = 5$, sin operadores compuestos \texttt{and}/\texttt{or} dentro de condicionales) ubicados en \texttt{src/application/strategies.py}. La Figura~\ref{fig:cfg1} muestra su Grafo de Flujo de Control exacto ($N = 11$ nodos, $E = 15$ aristas).
@@ -813,16 +857,18 @@ v(G) = P + 1 = 5 + 1 = 6 \qquad\Longleftrightarrow\qquad v(G) = E - N + 2 = 15 -
 \midrule
 \textbf{C1} & \texttt{N1-N2-N11} & $H = 30.0 \ge H_{\min}(30.0)$ & \texttt{0.0 mm} (\texttt{test\_camino1...}) \\
 \textbf{C2} & \texttt{N1-N3-N4-N5-N11} & $H = 22.0 \in [15, 30)$, lluvia $= 70.1\% > 70\%$ & \texttt{0.0 mm} (\texttt{test\_camino2...}) \\
-\textbf{C3} & \texttt{N1-N3-N6-N7-N11} & $H = 25.0 < 30.0$, $H_{\text{obj}} = 20.0 \implies \text{déficit} \le 0$ & \texttt{0.0 mm} (\texttt{test\_camino4...}) \\
-\textbf{C4} & \texttt{N1-N3-N6-N8-N10-N11} & $H = 14.9 < H_{\text{crit}}(15)$, lluvia $= 95\%$, $T=22^{\circ}\text{C}$ & \texttt{20.30 mm} (\texttt{test\_camino3...}) \\
+\textbf{C3} & \texttt{N1-N3-N6-N8-N10-N11} & $H = 14.9 < H_{\text{crit}}(15)$, lluvia $= 95\%$, $T=22^{\circ}\text{C}$ & \texttt{20.30 mm} (\texttt{test\_camino3...}) \\
+\textbf{C4} & \texttt{N1-N3-N6-N7-N11} & Guarda defensiva: llamada aislada con $H_{\text{obj}}=20.0 < H_{\min}=30.0 \implies \text{déficit} \le 0$ & \texttt{0.0 mm} (\texttt{test\_camino4...}) \\
 \textbf{C5} & \texttt{N1-N3-N4-N6-N8-N10-N11} & $H = 25.0$, lluvia $= 70.0\% \le 70\%$, $T=29.9^{\circ}\text{C}$ & \texttt{15.75 mm} (\texttt{test\_camino5...}) \\
 \textbf{C6} & \texttt{N1-N3-N4-N6-N8-N9-N10-N11} & $H = 25.0$, lluvia $= 20.0\%$, $T=30.0^{\circ}\text{C} \ge 30$ & \texttt{18.11 mm} (\texttt{test\_camino6...}) \\
 \bottomrule
 \end{tabularx}
 \end{table}
 
+\noindent\textbf{Nota sobre el camino defensivo \texttt{C4} (\texttt{P4}):} Bajo las invariantes del agregado (\texttt{SectorAgricola.\allowbreak configurarUmbrales()}, donde $0 < \text{crítico} < \text{mínimo} < \text{objetivo} \le 100$), todo flujo que supera \texttt{P1} ($H < H_{\min}$) satisface necesariamente $H < H_{\text{obj}}$, haciendo inalcanzable a \texttt{P4} desde el agregado. No obstante, \texttt{EstrategiaRiegoAgronomico} conserva \texttt{P4} como guarda defensiva ante invocaciones directas sin validar del puerto \texttt{IEstrategiaRiego}, cubierta explícitamente en aislamiento unitario por \texttt{test\_camino4}.
+
 \subsection{Función Crítica 2: \texttt{ServicioMonitoreoRiego.evaluarRiesgoFitosanitario()}}
-Implementada en \texttt{src/application/services.py} con 8 predicados atómicos ($P = 8$) sin condiciones compuestas, delegando la ventana anti-spam de $12\text{ h}$ al auxiliar cohesivo \texttt{\_construirAlertaSiAplica()} ($P=1, v(G)=2$). El CFG de la Figura~\ref{fig:cfg2} tiene $N = 13$ nodos y $E = 20$ aristas.
+Implementada en \texttt{src/application/services.py} con 8 predicados atómicos ($P = 8$) sin condiciones compuestas, delegando la ventana anti-spam de $12\text{ h}$ al auxiliar cohesivo \texttt{\_construirAlerta\allowbreak SiAplica()} ($P=1, v(G)=2$). El CFG de la Figura~\ref{fig:cfg2} tiene $N = 13$ nodos y $E = 20$ aristas.
 
 \begin{figure}[H]
 \centering
@@ -899,19 +945,19 @@ donde $E$ representa los defectos detectados y corregidos antes de la liberació
 \caption{Contabilización justificada de defectos removidos por fase (\textit{AgriTech Precision}).}
 \label{tab:dre}
 \small
-\begin{tabularx}{\textwidth}{p{5.4cm} c Y}
+\begin{tabularx}{\textwidth}{L{5.4cm} c Y}
 \toprule
 \textbf{Fase de Aseguramiento de Calidad} & \textbf{Defectos ($E$ / $D$)} & \textbf{Ejemplos Concretos Documentados y Resueltos} \\
 \midrule
 1. Inspección Estática SRS y UML (Entrega 1 $\rightarrow$ Final) & $E_1 = 5$ & Eliminación de RNF no cuantificables, incorporación de \texttt{IE-01..04}, \texttt{SEG-01..04}, distinción Composición vs. Agregación y estado compuesto \texttt{REGANDO}. \\
 2. Pruebas Unitarias TDD y Análisis McCabe & $E_2 = 8$ & Ajuste de fronteras estrictas ($H < 30.0\%$, $\text{probLluvia} > 70.0\%$, $H < 15.0\%$, $HR > 85.0\%$), corrección \texttt{ClassVar} en \texttt{CicloRiego} y ventana anti-spam $12\text{ h}$. \\
 3. Pruebas de Integración sobre \textit{Seams} & $E_3 = 7$ & Preservación de \texttt{ERROR\_VALVULA} frente a alertas fitosanitarias posteriores, expiración exacta caché 3 h en \texttt{AdaptadorAPIMeteo} y reintentos \texttt{IE-03}. \\
-4. Revisión de Código (\texttt{code-review}) & $E_4 = 4$ & Extracción de \texttt{wsgi.py} para evitar creación de BD en tiempo de importación y refuerzo de guardas RBAC HTTP 403 en \texttt{/api/\allowbreak sectores/*/\allowbreak restablecer}. \\
+4. Revisión Estática y de Pares del Código & $E_4 = 4$ & Extracción de \texttt{wsgi.py}, normalización WSGI para Vercel y refuerzo de guardas RBAC HTTP 403 en \texttt{/api/\allowbreak sectores/*/\allowbreak restablecer}. \\
 \midrule
 \textbf{Total Defectos Removidos antes de Entrega ($E$)} & \textbf{24} & \textbf{100\% corregidos y cubiertos por regresión automatizada} \\
-\textbf{Defectos Detectados en Aceptación / UAT ($D$)} & \textbf{1} & Ajuste menor de recarga visual del toast en tablero tras escenario rápido. \\
+\textbf{Defectos Detectados en Aceptación / UAT ($D$)} & \textbf{1} & Detectado por los 4 integrantes durante validación exploratoria UI web (14--17 nov. 2026): retraso menor de recarga visual del \textit{toast} tras escenario rápido. \\
 \midrule
-\textbf{Eficiencia de Remoción de Defectos ($DRE$)} & \multicolumn{2}{p{\dimexpr\textwidth-5.4cm-6\tabcolsep\relax}}{$\displaystyle DRE = \frac{24}{24 + 1} \times 100\% = \mathbf{96.0\%}$ (Supera meta institucional $\ge 95\%$)} \\
+\textbf{Eficiencia de Remoción de Defectos ($DRE$)} & \multicolumn{2}{p{\dimexpr\textwidth-5.4cm-6\tabcolsep\relax}}{$\displaystyle DRE = \frac{24}{24 + 1} \times 100\% = \mathbf{96.0\%}$ (24 de 25 defectos totales removidos antes de aceptación)} \\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -926,9 +972,12 @@ El prototipo se implementó íntegramente desde cero en \texttt{agritech\_cloud\
 
 \begin{lstlisting}[caption={Árbol real de archivos del prototipo \texttt{agritech\_cloud\_app/}.}]
 agritech_cloud_app/
-|-- GLOSSARY.md                      # Fuente canónica de nombres (domain-modeling)
-|-- Dockerfile                       # Imagen lista para nube con Healthcheck
-|-- render.yaml                      # Blueprint de despliegue en Render Cloud
+|-- GLOSSARY.md                      # Lenguaje ubicuo y glosario canónico del dominio
+|-- Dockerfile                       # Imagen alternativa para contenedorización portátil
+|-- render.yaml                      # Manifiesto opcional alternativo (Render)
+|-- vercel.json                      # Manifiesto de rutas @vercel/python
+|-- api/
+|   `-- index.py                     # Entrypoint serverless WSGI + VercelPathFixMiddleware
 |-- requirements.txt                 # Flask, openpyxl, requests, bcrypt, gunicorn
 |-- app.py                           # Fábrica Flask MVC y endpoints RBAC / API / Sectores
 |-- wsgi.py                          # Entrada WSGI de producción con hilo simulador
@@ -1009,12 +1058,12 @@ test_invariantes_umbrales_y_sensor_y_maquina_estados (...) ... ok
 test_registrar_alerta_preserva_error_valvula (...) ... ok
 
 ----------------------------------------------------------------------
-Ran 21 tests in 2.021s
+Ran 21 tests in 2.144s
 
 OK
 \end{lstlisting}
 
-\section{Guía de Ejecución Local y Despliegue en Cloud (Docker / Render)}
+\section{Guía de Ejecución Local y Despliegue Productivo en la Nube (Vercel)}
 \subsection{Ejecución Local}
 \begin{lstlisting}[language=bash, caption={Comandos reproducibles para ejecución local y verificación de pruebas.}]
 cd agritech_cloud_app
@@ -1024,12 +1073,24 @@ python3 app.py
 # Panel web disponible en http://127.0.0.1:5000
 \end{lstlisting}
 
-\subsection{Despliegue Contenerizado con Docker o Render Cloud}
-El repositorio incluye \texttt{Dockerfile} (con \texttt{HEALTHCHECK} sobre \texttt{/api/health} y servidor WSGI \texttt{gunicorn} apuntando a \texttt{wsgi:app}) y manifiesto \texttt{render.yaml} listo para despliegue continuo como \textit{Web Service}:
-\begin{lstlisting}[language=bash, caption={Construcción y ejecución en contenedor Docker.}]
-docker build -t agritech-precision-cloud .
-docker run -d -p 8080:8080 --name agritech agritech-precision-cloud
-curl http://127.0.0.1:8080/api/health
+\subsection{Evidencia Real de Despliegue en Producción (Vercel Serverless)}
+Como plataforma oficial de despliegue en la nube se seleccionó \textbf{Vercel}, disponible públicamente en \url{https://agri-tech-six-cyan.vercel.app}, sirviendo la aplicación Flask sobre el runtime \texttt{@vercel/\allowbreak python} mediante \texttt{vercel.json} y \texttt{api/index.py}, con persistencia SQLite en \texttt{/tmp/agritech.db}, avance reactivo de telemetría en \texttt{/api/estado} y normalización WSGI. *(El repositorio conserva adicionalmente \texttt{Dockerfile} y \texttt{render.yaml} como opciones de portabilidad en contenedor).*
+
+\begin{lstlisting}[caption={Verificación HTTP en vivo del endpoint de salud en Vercel (\texttt{/api/health}).}]
+$ curl -i https://agri-tech-six-cyan.vercel.app/api/health
+HTTP/2 200
+content-type: application/json
+server: Vercel
+x-vercel-id: iad1::iad1::pvp9p-1795050381992-dbab7831b0b6
+
+{"relojSimulado":"2026-11-18T20:11:04.765184-05:00","sectores":3,"servicio":"AgriTech Precision Cloud","status":"UP"}
 \end{lstlisting}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.96\textwidth]{./figures/vercel_dashboard_live.png}
+\caption{Captura real del prototipo \textbf{AgriTech Precision} ejecutándose en producción sobre Vercel (\url{https://agri-tech-six-cyan.vercel.app}), mostrando los tres sectores agrícolas, alertas tempranas, historial de ciclos FSM y gráficas interactivas.}
+\label{fig:vercel_live}
+\end{figure}
 
 \end{document}

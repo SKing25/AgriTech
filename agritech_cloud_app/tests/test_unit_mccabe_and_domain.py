@@ -99,6 +99,7 @@ class TestMcCabeEstrategiaYDominio(unittest.TestCase):
         self.assertEqual(emergencia, round((60.0 - 14.9) * 0.45, 2))
 
     def test_camino4_deficit_nulo_o_negativo_retorna_cero(self) -> None:
+        # Ejercita explícitamente la guarda defensiva P4 con entrada aislada (H_obj < H_min)
         lamina = self.estrategia.calcularLaminaRiego(25.0, 30.0, 15.0, 20.0, 10.0, 20.0)
         self.assertEqual(lamina, 0.0)
 

@@ -248,12 +248,22 @@ class BitacoraAuditoriaObserver(IObservadorEvento):
     """Observador GoF para registro estructurado JSON de alertas y trazabilidad (RNF-07)."""
 
     def __init__(self) -> None:
-        self.alertasEmitidas: List[AlertaTemprana] = []
-        self.eventosAuditoria: List[Dict[str, Any]] = []
+        self._alertasEmitidas: List[AlertaTemprana] = []
+        self._eventosAuditoria: List[Dict[str, Any]] = []
+
+    @property
+    def alertasEmitidas(self) -> List[AlertaTemprana]:
+        """Retorna una copia de solo lectura de las alertas capturadas."""
+        return list(self._alertasEmitidas)
+
+    @property
+    def eventosAuditoria(self) -> List[Dict[str, Any]]:
+        """Retorna una copia de solo lectura de los eventos de auditoría capturados."""
+        return list(self._eventosAuditoria)
 
     def actualizarAlerta(self, alerta: AlertaTemprana) -> None:
         """Captura alertas emitidas y registra evento JSON."""
-        self.alertasEmitidas.append(alerta)
+        self._alertasEmitidas.append(alerta)
         registro = {
             "evento": "ALERTA_TEMPRANA",
             "idAlerta": alerta.idAlerta,
@@ -279,5 +289,5 @@ class BitacoraAuditoriaObserver(IObservadorEvento):
             "detalle": detalle,
             "timestamp": timestamp.isoformat(),
         }
-        self.eventosAuditoria.append(registro)
+        self._eventosAuditoria.append(registro)
         logger.info(json.dumps(registro, ensure_ascii=False))
