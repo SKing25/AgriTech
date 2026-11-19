@@ -1030,7 +1030,57 @@ class EstrategiaRiegoAgronomico(IEstrategiaRiego):
         return round(laminaBase, 2)
 \end{lstlisting}
 
-\section{Evidencia Real de Ejecución de la Suite de Pruebas (TDD)}
+\section{Pirámide de Pruebas (TDD) y Evidencia Real de Ejecución}
+La estrategia de verificación sigue el modelo de la \textbf{Pirámide de Pruebas} (\textit{Test Pyramid}), concentrando el mayor volumen de aserciones en pruebas unitarias rápidas sobre lógica pura de dominio y algoritmos McCabe ($14$ pruebas, $66.7\%$), complementadas por pruebas de integración sobre \textit{seams} con SQLite y dobles determinísticos ($7$ pruebas, $33.3\%$), y culminando en verificaciones \textit{smoke}/UAT sobre el despliegue productivo en Vercel (Figura~\ref{fig:piramide_pruebas}).
+
+\begin{figure}[H]
+\centering
+\resizebox{\textwidth}{!}{%
+{\linespread{1.1}\selectfont
+\begin{tikzpicture}[
+    lbl/.style={align=center, font=\scriptsize, text=black},
+    det/.style={draw=usaBordeCodigo, fill=usaFondoCodigo, rounded corners=4pt, align=left, font=\scriptsize, inner sep=5pt, text width=7.2cm},
+    link/.style={-{Stealth[length=2.0mm]}, line width=0.65pt, color=usaGris}
+]
+% Base: 14 Pruebas Unitarias (trapecio inferior)
+\filldraw[fill=usaVerdeClaro, draw=usaVerde, line width=0.9pt]
+    (-4.6, 0.0) -- (4.6, 0.0) -- (3.1, 2.0) -- (-3.1, 2.0) -- cycle;
+\node[lbl] at (0, 1.0) {
+    \textbf{14 Pruebas Unitarias (66.7\%)}\\
+    \textit{Base rápida y aislada}
+};
+
+% Capa Media: 7 Pruebas de Integración (trapecio medio)
+\filldraw[fill=usaAzulClaro, draw=usaAzul, line width=0.9pt]
+    (-3.0, 2.15) -- (3.0, 2.15) -- (1.6, 4.05) -- (-1.6, 4.05) -- cycle;
+\node[lbl] at (0, 3.1) {
+    \textbf{7 Pruebas de}\\
+    \textbf{Integración (33.3\%)}\\
+    \textit{Seams y SQLite}
+};
+
+% Cúspide: E2E / Cloud & UAT (triángulo superior amplio)
+\filldraw[fill=orange!15, draw=usaAmbar, line width=0.9pt]
+    (-1.5, 4.2) -- (1.5, 4.2) -- (0.0, 6.0) -- cycle;
+\node[lbl] at (0, 4.72) {
+    \textbf{E2E / Cloud}\\
+    \textit{Vercel + UAT}
+};
+
+% Callouts detallados a la derecha sin invadir los bordes de la pirámide
+\node[det] (d3) at (8.2, 5.0) {\textbf{Cúspide --- Verificación Cloud / E2E:}\\ \textit{Smoke checks} HTTP 200 en producción (\texttt{/api/health}, \texttt{/api/estado}), UI Tailwind v4, Gemelo 3D y UAT grupal.};
+\node[det] (d2) at (8.2, 3.1) {\textbf{Capa Media --- \texttt{test\_integration\_seams.py}:}\\ Flujo \texttt{CU-04} en SQLite, timeout $45\text{ min}$, caché $3\text{ h}$ \texttt{APIMeteo}, $3$ reintentos \texttt{ServidorValvulas}, Flask RBAC (401/403) y Excel \texttt{.xlsx}.};
+\node[det] (d1) at (8.2, 1.0) {\textbf{Base --- \texttt{test\_unit\_mccabe\_and\_domain.py}:}\\ $6$ caminos base McCabe ($v(G)=6$), riesgo fitosanitario ($v(G)=9$), anti-spam $12\text{ h}$, invariantes de dominio y FSM \texttt{CicloRiego}.};
+
+\draw[link] (0.85, 5.0) -- (d3.west);
+\draw[link] (2.3, 3.1) -- (d2.west);
+\draw[link] (3.85, 1.0) -- (d1.west);
+\end{tikzpicture}
+}}
+\caption{Pirámide de Pruebas implementada en \textbf{AgriTech Precision} ($14$ pruebas unitarias + $7$ de integración sobre \textit{seams} + verificación \textit{smoke}/UAT en Vercel).}
+\label{fig:piramide_pruebas}
+\end{figure}
+
 Todas las pruebas unitarias y de integración fueron ejecutadas tras la última modificación del código mediante \texttt{python3 -m unittest discover -v -s tests}, obteniendo \textbf{21 de 21 pruebas exitosas (0 errores, 0 omisiones)}.
 
 \begin{lstlisting}[caption={Salida textual real de la suite de pruebas automatizadas y verificación de integración.}]
@@ -1058,7 +1108,7 @@ test_invariantes_umbrales_y_sensor_y_maquina_estados (...) ... ok
 test_registrar_alerta_preserva_error_valvula (...) ... ok
 
 ----------------------------------------------------------------------
-Ran 21 tests in 2.144s
+Ran 21 tests in 2.021s
 
 OK
 \end{lstlisting}
@@ -1074,7 +1124,7 @@ python3 app.py
 \end{lstlisting}
 
 \subsection{Evidencia Real de Despliegue en Producción (Vercel Serverless)}
-Como plataforma oficial de despliegue en la nube se seleccionó \textbf{Vercel}, disponible públicamente en \url{https://agri-tech-six-cyan.vercel.app}, sirviendo la aplicación Flask sobre el runtime \texttt{@vercel/\allowbreak python} mediante \texttt{vercel.json} y \texttt{api/index.py}, con persistencia SQLite en \texttt{/tmp/agritech.db}, avance reactivo de telemetría en \texttt{/api/estado} y normalización WSGI. *(El repositorio conserva adicionalmente \texttt{Dockerfile} y \texttt{render.yaml} como opciones de portabilidad en contenedor).*
+Como plataforma oficial de despliegue en la nube se seleccionó \textbf{Vercel}, disponible públicamente en \url{https://agri-tech-six-cyan.vercel.app}, sirviendo la aplicación Flask sobre el runtime \texttt{@vercel/\allowbreak python} mediante \texttt{vercel.json} y \texttt{api/index.py}, con persistencia SQLite en \texttt{/tmp/agritech.db}, avance reactivo de telemetría en \texttt{/api/estado} y normalización WSGI. \textit{(El repositorio conserva adicionalmente \texttt{Dockerfile} y \texttt{render.yaml} como opciones de portabilidad en contenedor)}.
 
 \begin{lstlisting}[caption={Verificación HTTP en vivo del endpoint de salud en Vercel (\texttt{/api/health}).}]
 $ curl -i https://agri-tech-six-cyan.vercel.app/api/health
