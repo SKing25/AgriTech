@@ -578,7 +578,7 @@ function renderTodoDetalle(payload) {
 }
 
 async function actualizarDetalleEnVivo() {
-  const res = await fetch('/api/sectores/' + encodeURIComponent(SECTOR_ID) + '/historial', { cache: 'no-store' });
+  const res = await fetch('/api/sectores/' + encodeURIComponent(SECTOR_ID) + '/historial?_t=' + Date.now(), { cache: 'no-store' });
   if (!res.ok) throw new Error('HTTP ' + res.status);
   renderTodoDetalle(await res.json());
 }

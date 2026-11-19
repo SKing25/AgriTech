@@ -81,8 +81,9 @@ class MotorSimuladorFisico:
         }
 
     def sincronizarDesdeRepositorio(self) -> None:
-        """Sincroniza valores físicos iniciales con la última lectura persistida en BD."""
+        """Sincroniza valores físicos iniciales y reloj con la última lectura persistida en BD."""
         with self._lock:
+            max_ts: Optional[datetime] = None
             for fisico in self._estadosFisicos.values():
                 sector = self.repositorio.obtenerSector(fisico.idSector)
                 if sector is not None:
@@ -92,6 +93,10 @@ class MotorSimuladorFisico:
                         fisico.temperaturaSuelo = ultima.temperaturaSuelo
                         fisico.temperaturaAmbiente = ultima.temperaturaAmbiente
                         fisico.humedadRelativa = ultima.humedadRelativa
+                        if max_ts is None or ultima.timestamp > max_ts:
+                            max_ts = ultima.timestamp
+            if max_ts is not None and self.reloj.ahora() < max_ts:
+                self.reloj.establecer(max_ts)
 
     def obtenerEstadosFisicos(self) -> Dict[str, EstadoFisicoNodo]:
         with self._lock:

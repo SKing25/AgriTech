@@ -52,9 +52,9 @@ def create_app(
     elif es_serverless:
         # En entornos serverless (Vercel / Lambda) el único directorio escribible es /tmp
         rutaBd = "/tmp/agritech.db"
-        if not os.path.exists(rutaBd):
-            template_db = os.path.join(base_dir, "data", "agritech.db")
-            if os.path.exists(template_db):
+        template_db = os.path.join(base_dir, "data", "agritech.db")
+        if os.path.exists(template_db):
+            if not os.path.exists(rutaBd) or os.path.getmtime(template_db) > os.path.getmtime(rutaBd):
                 import shutil
                 try:
                     shutil.copyfile(template_db, rutaBd)
@@ -107,6 +107,11 @@ def create_app(
             simulador.ejecutarCicloTick()
     else:
         simulador.sincronizarDesdeRepositorio()
+
+    for s in repositorio.listarSectores():
+        ciclo = s.obtenerCicloActivo()
+        if ciclo and ciclo.estado.value == "REGANDO":
+            valvulas.activarValvula(s.idSector, 600)
 
     if iniciarSimulador and not es_serverless:
         def _loopSimulador() -> None:
@@ -282,13 +287,20 @@ def create_app(
             "ciclos": [c for c in snapshot["ciclos"] if c["idSector"] == idSector],
         }
 
-    @app.get("/")
-    def index():
-        if es_serverless:
+    def _avanzarTickServerless() -> None:
+        if not es_serverless:
+            return
+        ahora_ts = time.time()
+        if ahora_ts - getattr(app, "_ultimo_tick_serverless", 0) >= 2.0:
+            setattr(app, "_ultimo_tick_serverless", ahora_ts)
             try:
                 simulador.ejecutarCicloTick()
             except Exception:
                 pass
+
+    @app.get("/")
+    def index():
+        _avanzarTickServerless()
         snapshot = _construirSnapshot()
         auditoria = (
             repositorio.obtenerAuditoria(30)
@@ -304,6 +316,7 @@ def create_app(
 
     @app.get("/sectores/<idSector>")
     def vistaDetalleSector(idSector: str):
+        _avanzarTickServerless()
         detalle = _detalleSectorSnapshot(idSector)
         if detalle is None:
             return jsonify({"error": f"Sector no encontrado: {idSector}"}), 404
@@ -317,11 +330,12 @@ def create_app(
 
     @app.get("/api/sectores/<idSector>/historial")
     def apiHistorialSector(idSector: str):
+        _avanzarTickServerless()
         detalle = _detalleSectorSnapshot(idSector)
         if detalle is None:
             return jsonify({"error": f"Sector no encontrado: {idSector}"}), 404
         snapshot = detalle["snapshot"]
-        return jsonify(
+        resp = jsonify(
             {
                 "relojSimulado": snapshot["relojSimulado"],
                 "usuario": snapshot["usuario"],
@@ -329,7 +343,11 @@ def create_app(
                 "alertas": detalle["alertas"],
                 "ciclos": detalle["ciclos"],
             }
-        ), 200
+        )
+        resp.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, max-age=0"
+        resp.headers["Pragma"] = "no-cache"
+        resp.headers["Expires"] = "0"
+        return resp, 200
 
     @app.post("/login")
     def loginWeb():
@@ -380,15 +398,12 @@ def create_app(
 
     @app.get("/api/estado")
     def apiEstado():
-        if es_serverless:
-            ahora_ts = time.time()
-            if ahora_ts - getattr(app, "_ultimo_tick_serverless", 0) >= 2.0:
-                setattr(app, "_ultimo_tick_serverless", ahora_ts)
-                try:
-                    simulador.ejecutarCicloTick()
-                except Exception:
-                    pass
-        return jsonify(_construirSnapshot()), 200
+        _avanzarTickServerless()
+        resp = jsonify(_construirSnapshot())
+        resp.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, max-age=0"
+        resp.headers["Pragma"] = "no-cache"
+        resp.headers["Expires"] = "0"
+        return resp, 200
 
     @app.post("/api/lecturas")
     def apiPostLectura():
@@ -497,22 +512,23 @@ def create_app(
     @app.post("/api/simulador/tick")
     def apiSimuladorTick():
         usuario = _usuarioActual()
-        if not usuario:
-            return jsonify({"error": "Autenticación requerida"}), 401
         resultados = simulador.ejecutarCicloTick()
+        if usuario:
+            repositorio.registrarAuditoriaEnBD(
+                usuario["email"], "SIMULADOR_TICK", f"Tick manual ({len(resultados)} nodos)", reloj.ahora()
+            )
         return jsonify({"resultados": resultados, "relojSimulado": reloj.ahora().isoformat()}), 200
 
     @app.post("/api/simulador/escenario")
     def apiSimuladorEscenario():
         usuario = _usuarioActual()
-        if not usuario:
-            return jsonify({"error": "Autenticación requerida"}), 401
         data = request.get_json(silent=True) or {}
         idSector = str(data.get("idSector", "SEC-01"))
         escenario = str(data.get("escenario", "normalizar"))
         res = simulador.activarEscenario(idSector, escenario)
+        email = usuario["email"] if usuario else "DEMO_ANONIMO"
         repositorio.registrarAuditoriaEnBD(
-            usuario["email"], "SIMULADOR_ESCENARIO", f"{idSector}: {escenario}", reloj.ahora()
+            email, "SIMULADOR_ESCENARIO", f"{idSector}: {escenario}", reloj.ahora()
         )
         return jsonify(res), 200
 

@@ -444,7 +444,7 @@ function renderizarTablero(snapshot) {
 let ULTIMO_SNAPSHOT = SNAPSHOT_INICIAL;
 
 async function actualizarTableroEnVivo() {
-  const res = await fetch('/api/estado', { cache: 'no-store' });
+  const res = await fetch('/api/estado?_t=' + Date.now(), { cache: 'no-store' });
   if (!res.ok) throw new Error('HTTP ' + res.status);
   ULTIMO_SNAPSHOT = await res.json();
   renderizarTablero(ULTIMO_SNAPSHOT);

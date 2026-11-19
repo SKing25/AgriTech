@@ -109,9 +109,18 @@
   /* Sondeo periódico. Se pausa con la pestaña oculta para no gastar invocaciones serverless. */
   function iniciarSondeo(fn, ms) {
     var activo = true;
+    var enEjecucion = false;
     async function tick() {
-      if (document.hidden) return;
-      try { await fn(); marcarConexion(true); } catch (e) { marcarConexion(false); }
+      if (document.hidden || enEjecucion) return;
+      enEjecucion = true;
+      try {
+        await fn();
+        marcarConexion(true);
+      } catch (e) {
+        marcarConexion(false);
+      } finally {
+        enEjecucion = false;
+      }
     }
     document.addEventListener('visibilitychange', function () {
       if (!document.hidden && activo) tick();
