@@ -1,0 +1,13 @@
+{
+  "name": "agritech-frontend",
+  "private": true,
+  "description": "Herramientas de compilación del frontend (solo desarrollo). El CSS compilado se versiona en static/css/tailwind.css.",
+  "scripts": {
+    "build:css": "tailwindcss -i input.css -o ../static/css/tailwind.css --minify",
+    "watch:css": "tailwindcss -i input.css -o ../static/css/tailwind.css --watch"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.1.0",
+    "tailwindcss": "^4.1.0"
+  }
+}

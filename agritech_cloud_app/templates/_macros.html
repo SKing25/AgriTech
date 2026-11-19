@@ -1,0 +1,16 @@
+{#- Etiquetas legibles para los valores de enumeración del dominio. -#}
+{#- Debe coincidir con AG.etiqueta() en static/js/common.js. -#}
+{% macro etiqueta(valor) -%}
+{%- set especiales = {
+  'OPTIMO': 'Óptimo',
+  'CRITICA': 'Crítica',
+  'ERROR_VALVULA': 'Error de válvula',
+  'ACTIVO': 'Activo',
+  'INACTIVO': 'Inactivo'
+} -%}
+{%- if valor is not none and valor != '' -%}{{ especiales.get(valor, (valor | string | replace('_', ' ') | lower | capitalize)) }}{%- endif -%}
+{%- endmacro %}
+
+{% macro rol(valor) -%}
+{{ {'GESTOR_SENSORES': 'Gestor de sensores', 'TECNICO_AGRICOLA': 'Técnico agrícola', 'ADMINISTRADOR': 'Administrador'}.get(valor, valor) }}
+{%- endmacro %}
