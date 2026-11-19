@@ -44,8 +44,17 @@ proyecto final INGW/
 │   │   ├── application/                   # Servicios, Puertos y Estrategias (McCabe V(G) <= 10)
 │   │   └── infrastructure/                # Adaptadores REST/APIs, Repositorio SQLite y Simulador
 │   ├── templates/
-│   │   ├── dashboard.html                 # Dashboard principal en Tailwind CSS v4 + Three.js 3D
-│   │   └── sector_detalle.html            # Vista analítica y telemetría por sector individual
+│   │   ├── base.html                      # Plantilla base: cabecera, navegación, tema, avisos
+│   │   ├── _macros.html                   # Etiquetas legibles de estados y roles
+│   │   ├── dashboard.html                 # Dashboard principal (extiende base.html)
+│   │   └── sector_detalle.html            # Vista analítica y telemetría por sector (extiende base.html)
+│   ├── static/
+│   │   ├── css/tailwind.css               # CSS compilado (Tailwind v4), versionado en el repo
+│   │   ├── js/common.js                   # Utilidades compartidas: tema, avisos, API, sondeo
+│   │   └── vendor/three/                  # Three.js r186 servido localmente (sin CDN)
+│   ├── frontend/                          # Fuente del CSS y script de compilación (solo desarrollo)
+│   │   ├── input.css
+│   │   └── package.json
 │   └── tests/                             # Suite de pruebas automatizadas (TDD)
 │       ├── test_unit_mccabe_and_domain.py # Pruebas unitarias de algoritmos e invariantes
 │       └── test_integration_seams.py      # Pruebas de integración sobre seams, mocks y Flask
@@ -95,6 +104,22 @@ El servidor iniciará en `http://localhost:5000`.
 | **Gestor de Sensores** | `gestor@agritech.co` | `AgriGestor2026!` | Telemetría, conmutar nodo, exportar Excel. |
 | **Técnico Agrícola** | `tecnico@agritech.co` | `AgriTecnico2026!` | Riego manual/auto, calibrar umbrales, exportar Excel. |
 | **Administrador** | `admin@agritech.co` | `AgriAdmin2026!` | Gestión de usuarios, alta de nodos, log de auditoría. |
+
+---
+
+## 🎨 Frontend (Tailwind compilado y Three.js local)
+
+La interfaz ya no depende de ningún CDN en tiempo de ejecución: el CSS se compila una vez y Three.js se sirve desde `static/vendor/three/`. Para modificar estilos o clases de Tailwind en las plantillas hay que recompilar el CSS (requiere Node 18 o superior):
+
+```bash
+cd agritech_cloud_app/frontend
+npm install
+npm run build:css      # genera ../static/css/tailwind.css (versionarlo en Git)
+# o, mientras se edita:
+npm run watch:css
+```
+
+El archivo `static/css/tailwind.css` **sí se versiona**, porque Vercel no ejecuta `npm` en un proyecto Python.
 
 ---
 

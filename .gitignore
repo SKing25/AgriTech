@@ -28,3 +28,6 @@ ENV/
 Thumbs.db
 .vscode/
 .idea/
+
+# Frontend tooling
+agritech_cloud_app/frontend/node_modules/

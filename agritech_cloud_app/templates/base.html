@@ -1,0 +1,65 @@
+{% import '_macros.html' as m %}<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="dark light" />
+  <title>{% block title %}AgriTech Precision — Monitor IoT y Riego Automatizado{% endblock %}</title>
+  <script>
+    /* Aplica el tema guardado antes de pintar para evitar el destello oscuro/claro. */
+    (function () {
+      try { if (localStorage.getItem('agritech-theme') === 'light') document.documentElement.classList.remove('dark'); } catch (e) {}
+    })();
+  </script>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23064e3b'/%3E%3Cpath d='M32 50V30M32 30c0-9 6-15 16-16 0 10-6 16-16 16zM32 38c0-7-5-12-14-13 0 8 5 13 14 13z' fill='none' stroke='%234ade80' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/tailwind.css') }}" />
+  {% block head_extra %}{% endblock %}
+</head>
+<body class="min-h-screen antialiased">
+<a href="#contenido" class="skip-link">Saltar al contenido</a>
+
+<header class="ag-header">
+  <div class="mx-auto max-w-[1440px] px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+    <div class="min-w-0">
+      {% block brand %}
+      <p class="m-0 text-lg sm:text-xl font-bold tracking-tight">AgriTech Precision <span class="font-normal text-emerald-200">· Grupo 2 (PCIA5008)</span></p>
+      <p class="m-0 text-xs text-emerald-200">Monitoreo agrícola IoT, riego automatizado y alertas fitosanitarias</p>
+      {% endblock %}
+    </div>
+
+    <div class="flex flex-wrap items-center gap-2">
+      <span class="ag-chip" id="liveBadge" role="status" aria-live="polite"><span class="live-dot" aria-hidden="true"></span><span id="liveText">En vivo · 2.5 s</span></span>
+      <span class="ag-chip" id="relojBadge" title="Reloj de la simulación">Reloj simulado: {{ snapshot.relojSimulado }}</span>
+      <button type="button" class="ag-chip cursor-pointer" id="btnTema" onclick="alternarTema()" aria-pressed="true">Modo claro</button>
+      {% if snapshot.usuario %}
+        <span class="ag-chip bg-sky-500/20" title="{{ snapshot.usuario.email }}">{% if m.rol(snapshot.usuario.rol)|lower in snapshot.usuario.nombre|lower %}{{ snapshot.usuario.nombre }}{% else %}{{ snapshot.usuario.nombre }} · {{ m.rol(snapshot.usuario.rol) }}{% endif %}</span>
+        {% block header_actions %}{% endblock %}
+        <form method="POST" action="/logout" class="m-0">
+          <button class="ag-chip cursor-pointer" type="submit">Cerrar sesión</button>
+        </form>
+      {% else %}
+        <span class="ag-chip">Lectura pública · inicie sesión para operar</span>
+      {% endif %}
+    </div>
+  </div>
+
+  <nav aria-label="Navegación entre sectores" class="border-t border-white/10">
+    <div class="mx-auto max-w-[1440px] px-4 sm:px-6 py-2 flex items-center gap-2 overflow-x-auto">
+      <a href="/" class="ag-chip" {% if request.path == '/' %}aria-current="page"{% endif %}>Tablero general</a>
+      {% for s in snapshot.sectores %}
+        <a href="/sectores/{{ s.idSector }}" class="ag-chip" {% if request.path == '/sectores/' ~ s.idSector %}aria-current="page"{% endif %}>{{ s.idSector }} · {{ s.nombre.split('—')[0].strip() if s.nombre else '' }}</a>
+      {% endfor %}
+    </div>
+  </nav>
+</header>
+
+<main id="contenido" class="max-w-[1440px] mx-auto px-4 sm:px-5 py-5 grid gap-5 animate-fade-in">
+  {% block content %}{% endblock %}
+</main>
+
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+<script src="{{ url_for('static', filename='js/common.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>
